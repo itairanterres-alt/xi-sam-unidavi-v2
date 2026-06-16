@@ -716,7 +716,7 @@ function SubmissaoApp() {
             {/* Campos de texto individualizados por DESENHO (esquema.js — fonte
                 única: window.SAM_ESQUEMA). Rótulos, ordem e nº de linhas mudam
                 por desenho; as CHAVES de dado (intro/objetivos/metodos/…) não. */}
-            {window.SAM_ESQUEMA.camposTexto(f.desenho).map((s) => (
+            {window.SAM_ESQUEMA.camposTexto(f.desenho, f.fase).map((s) => (
               <div key={s.chave} style={grupo}>
                 <label style={label}>{s.rotulo}</label>
                 <textarea rows={s.linhas || 3} style={campo} value={f[s.chave] || ""} onChange={set(s.chave)} />
@@ -748,7 +748,7 @@ function SubmissaoApp() {
                     </label>
                     <div style={{ flex:1, minWidth:0 }}>
                       <input value={fg.titulo} onChange={(e)=>setFig(i,"titulo",e.target.value)} placeholder="Título da figura" style={{ ...campo, marginBottom:8, padding:"7px 9px" }}/>
-                      <select value={fg.secao} onChange={(e)=>setFig(i,"secao",e.target.value)} style={{ ...campo, marginBottom:8, padding:"7px 9px" }}>{window.SAM_ESQUEMA.ancorasFig(f.desenho).map(s=><option key={s.v} value={s.v}>{s.l}</option>)}</select>
+                      <select value={fg.secao} onChange={(e)=>setFig(i,"secao",e.target.value)} style={{ ...campo, marginBottom:8, padding:"7px 9px" }}>{window.SAM_ESQUEMA.ancorasFig(f.desenho, f.fase).map(s=><option key={s.v} value={s.v}>{s.l}</option>)}</select>
                       <input value={fg.legenda} onChange={(e)=>setFig(i,"legenda",e.target.value)} placeholder="Legenda da figura" style={{ ...campo, padding:"7px 9px" }}/>
                     </div>
                   </div>

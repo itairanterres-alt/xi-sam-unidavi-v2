@@ -587,7 +587,7 @@ function CorpoPacked({ blocos, refsBloco, refsBanda, bw = 1520, ncols = 3, gap =
   /* re-mede quando as imagens terminam de carregar */
   React.useLayoutEffect(() => {
     const m = measRef.current; if (!m) return;
-    const bump = () => setTick((x) => x + 1);
+    const bump = () => { const bsig = colW + "|" + all.length; if (ctl.current.bsig !== bsig) { ctl.current.bsig = bsig; ctl.current.bn = 0; } if ((ctl.current.bn || 0) > 100) return; ctl.current.bn = (ctl.current.bn || 0) + 1; setTick((x) => x + 1); };
     const imgs = Array.from(m.querySelectorAll("img"));
     imgs.forEach((im) => { if (!im.complete) im.addEventListener("load", bump, { once: true }); });
     const tid = setTimeout(bump, 1200);
@@ -607,22 +607,24 @@ function CorpoPacked({ blocos, refsBloco, refsBanda, bw = 1520, ncols = 3, gap =
       let tallest = 0; start = 0; cuts.forEach((c) => { tallest = Math.max(tallest, hs.slice(start, c).reduce((a, b) => a + b, 0)); start = c; });
       const est = tallest ? Math.max(pisoMin, Math.min(1.1, (availH - 40) * 0.95 / tallest)) : 0.9;
       setGroups(g); setS(est); setEstourou(false);
-    } else { setGroups(g); }
+    }
   }, [colW, all.length, tick, availH]);
   /* REALIMENTAÇÃO: lê a altura REAL do outer (clientHeight, layout, imúne ao
      transform:scale) a cada passo — nunca depende do estado availH (que pode
      defasar em resize) — e ajusta s até a coluna mais alta caber de fato */
   React.useLayoutEffect(() => {
     const el = outerRef.current, row = visRef.current; if (!el || !row || !groups) return;
+    if (ctl.current.bt !== tick || ctl.current.ba !== availH) { ctl.current.bt = tick; ctl.current.ba = availH; ctl.current.budget = 0; ctl.current.estLatch = false; }
+    if ((ctl.current.budget || 0) > 40) return; /* DISJUNTOR anti-loop (ver CorpoRevista) */
     const clientH = el.clientHeight; if (clientH < 80) return;
     const maxH = Math.max(...[...row.children].map((c) => c.offsetHeight));
     const avail = clientH - 8 - (estourou ? 34 : 0);
     if (maxH > avail + 1) {
-      if (s > pisoMin) { ctl.current.ultima = "shrink"; setS((v) => Math.max(pisoMin, Math.round((v - 0.015) * 1000) / 1000)); }
-      else if (!estourou) setEstourou(true);
-    } else if (avail - maxH > clientH * 0.05 && s < 1.1 && ctl.current.ultima !== "shrink") {
-      ctl.current.ultima = "grow"; setS((v) => Math.min(1.1, Math.round((v + 0.012) * 1000) / 1000));
-    } else if (estourou && maxH <= avail) { setEstourou(false); }
+      if (s > pisoMin) { ctl.current.ultima = "shrink"; ctl.current.budget = (ctl.current.budget || 0) + 1; setS((v) => Math.max(pisoMin, Math.round((v - 0.015) * 1000) / 1000)); }
+      else if (!estourou) { ctl.current.estLatch = true; ctl.current.budget = (ctl.current.budget || 0) + 1; setEstourou(true); }
+    } else if (!estourou && avail - maxH > clientH * 0.05 && s < 1.1 && ctl.current.ultima !== "shrink") {
+      ctl.current.ultima = "grow"; ctl.current.budget = (ctl.current.budget || 0) + 1; setS((v) => Math.min(1.1, Math.round((v + 0.012) * 1000) / 1000));
+    } else if (estourou && maxH <= avail && !ctl.current.estLatch) { ctl.current.budget = (ctl.current.budget || 0) + 1; setEstourou(false); }
   });
   const blocoStyle = { marginBottom: 12 };
   return (
@@ -782,7 +784,7 @@ function CorpoRevista({ secoes, refsBloco, refsBanda, bw = 1520, gap = 36, padX 
   }, []);
   React.useLayoutEffect(() => {
     const m = measRef.current; if (!m) return;
-    const bump = () => setTick((x) => x + 1);
+    const bump = () => { const bsig = superW + "|" + all.length; if (ctl.current.bsig !== bsig) { ctl.current.bsig = bsig; ctl.current.bn = 0; } if ((ctl.current.bn || 0) > 100) return; ctl.current.bn = (ctl.current.bn || 0) + 1; setTick((x) => x + 1); };
     const imgs = Array.from(m.querySelectorAll("img"));
     const vis = visRef.current ? Array.from(visRef.current.querySelectorAll("img")) : [];
     [...imgs, ...vis].forEach((im) => { if (!im.complete) im.addEventListener("load", bump, { once: true }); });
@@ -826,19 +828,26 @@ function CorpoRevista({ secoes, refsBloco, refsBanda, bw = 1520, gap = 36, padX 
       let tallest = 0; start = 0; cuts.forEach((c) => { tallest = Math.max(tallest, hs.slice(start, c).reduce((a, b) => a + b, 0)); start = c; });
       const est = tallest ? Math.max(pisoMin, Math.min(1.1, (availH - 40) * 0.95 / tallest)) : 0.9;
       setGroups(g); setS(est); setEstourou(false);
-    } else { setGroups(g); }
+    }
   }, [superW, all.length, tick, availH]);
   React.useLayoutEffect(() => {
     const el = outerRef.current, row = visRef.current; if (!el || !row || !groups) return;
+    /* DISJUNTOR anti-loop: só a CADEIA SÍNCRONA de ajustes (s/estourou) conta
+       para o orçamento; disparos EXTERNOS (tick/availH) o zeram. Assim o efeito
+       congela ANTES do teto do React, eliminando "Maximum update depth
+       exceeded" sem penalizar a convergência normal. estLatch impede o
+       liga/desliga de `estourou` (que some/mostra as refs e muda o maxH). */
+    if (ctl.current.bt !== tick || ctl.current.ba !== availH) { ctl.current.bt = tick; ctl.current.ba = availH; ctl.current.budget = 0; ctl.current.estLatch = false; }
+    if ((ctl.current.budget || 0) > 40) return;
     const clientH = el.clientHeight; if (clientH < 80) return;
     const maxH = Math.max(...[...row.children].map((c) => c.offsetHeight));
     const avail = clientH - 8 - (estourou ? 34 : 0);
     if (maxH > avail + 1) {
-      if (s > pisoMin) { ctl.current.ultima = "shrink"; setS((v) => Math.max(pisoMin, Math.round((v - 0.015) * 1000) / 1000)); }
-      else if (!estourou) setEstourou(true);
-    } else if (avail - maxH > clientH * (ctl.current.ultima === "shrink" ? 0.12 : 0.05) && s < 1.1) {
-      ctl.current.ultima = "grow"; setS((v) => Math.min(1.1, Math.round((v + 0.012) * 1000) / 1000));
-    } else if (estourou && maxH <= avail) { setEstourou(false); }
+      if (s > pisoMin) { ctl.current.ultima = "shrink"; ctl.current.budget = (ctl.current.budget || 0) + 1; setS((v) => Math.max(pisoMin, Math.round((v - 0.015) * 1000) / 1000)); }
+      else if (!estourou) { ctl.current.estLatch = true; ctl.current.budget = (ctl.current.budget || 0) + 1; setEstourou(true); }
+    } else if (!estourou && avail - maxH > clientH * (ctl.current.ultima === "shrink" ? 0.12 : 0.05) && s < 1.1) {
+      ctl.current.ultima = "grow"; ctl.current.budget = (ctl.current.budget || 0) + 1; setS((v) => Math.min(1.1, Math.round((v + 0.012) * 1000) / 1000));
+    } else if (estourou && maxH <= avail && !ctl.current.estLatch) { ctl.current.budget = (ctl.current.budget || 0) + 1; setEstourou(false); }
   }, [s, groups, estourou, tick, availH]);
   /* OTIMIZADOR de desperdício — nível de COLUNA: se um float desce além do
      fim do conteúdo da coluna em mais de 45% da própria altura (nem a seção
