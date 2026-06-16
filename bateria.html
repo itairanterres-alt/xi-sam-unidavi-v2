@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XI SAM 2026 · Bateria de Regressão (DOC 4)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet" />
+  <style>
+    *{ box-sizing:border-box; }
+    html,body{ margin:0; padding:0; height:100%; }
+    body{ font-family:'IBM Plex Sans', system-ui, -apple-system, sans-serif; color:#0C1A2B; background:#0A1422; -webkit-font-smoothing:antialiased; overflow:hidden; }
+    button{ font-family:inherit; }
+    .sam-spin{ animation:samSpin .9s linear infinite; }
+    @keyframes samSpin{ to{ transform:rotate(360deg); } }
+    #palco{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
+    /* chips de revisão — NUNCA entram na captura (.capturando os oculta) */
+    .capturando .rev-ui{ display:none !important; }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- mesma cadeia de carregamento do telão -->
+  <script src="data.js"></script>
+  <script src="esquema.js"></script>
+  <script type="text/babel" src="lib.jsx"></script>
+  <script type="text/babel" src="posters.jsx"></script>
+
+  <script type="text/babel" data-presets="react">
+    /* ============================================================
+       BATERIA DE REGRESSÃO — DOC 4. Exercita o renderizador REAL
+       (PosterCompletoLandscape, intocado) com os 6 casos obrigatórios.
+       Imagens com proporções exatas em assets/bateria/.
+       ============================================================ */
+    const A = "assets/bateria/";
+    const REFS = [
+      "BRASIL. Ministério da Saúde. Diretrizes de atenção à saúde. Brasília, 2023.",
+      "SMITH, J. et al. Cohort outcomes in primary care. Lancet, v. 401, p. 220-231, 2023.",
+      "OLIVEIRA, A. B.; SOUZA, C. D. Epidemiologia aplicada. Rev Bras Epidemiol, v. 26, 2022.",
+      "WORLD HEALTH ORGANIZATION. Global health estimates. Geneva: WHO, 2024.",
+      "PEREIRA, M. G. Métodos de pesquisa em saúde. 3. ed. Rio de Janeiro: Guanabara, 2021.",
+    ].join("\n");
+
+    const CASES = [
+      {
+        rotulo: "F7-E339 · Ortopedia",
+        nota: "Coorte · 3 figuras (1 retrato principal + 2 landscape) · texto denso",
+        esperado: "Todas as figuras visíveis e legíveis, sem corte; texto preenchendo as duas super-colunas.",
+        t: {
+          id: "F7-E339", fase: 7, desenho: "Estudo de coorte", area: "Ortopedia",
+          titulo: "Fatores associados à consolidação tardia em fraturas diafisárias de tíbia tratadas com haste intramedular",
+          autores: ["A. M. Schmitt", "R. P. Konell", "L. F. Bauer"], orientador: "Orientador Exemplo",
+          afiliacao: "Faculdade de Medicina · UNIDAVI",
+          intro: "A consolidação tardia das fraturas diafisárias de tíbia permanece como complicação frequente do tratamento cirúrgico com haste intramedular, prolongando o afastamento laboral e elevando os custos assistenciais. A identificação precoce de fatores de risco modificáveis é determinante para o planejamento do seguimento ambulatorial e para a indicação de intervenções coadjuvantes ao reparo ósseo.",
+          objetivos: "Identificar fatores clínicos e cirúrgicos associados à consolidação tardia em pacientes submetidos a osteossíntese com haste intramedular.",
+          metodos: "Coorte retrospectiva de 214 pacientes operados entre 2019 e 2024 em hospital de referência do Alto Vale do Itajaí. As variáveis preditoras incluíram tabagismo, diabetes, energia do trauma, abertura da fratura e tempo até a cirurgia. O desfecho — consolidação além de 24 semanas — foi avaliado por radiografias seriadas e regressão logística multivariada.",
+          resultados: "Resultados esperados: maior incidência de consolidação tardia entre tabagistas e em fraturas expostas de alta energia, com possível associação independente ao retardo cirúrgico superior a 72 horas. Estima-se gradiente dose-resposta entre carga tabágica e tempo de consolidação.",
+          palavras: ["Fraturas da tíbia", "Consolidação óssea", "Fixação intramedular"],
+          referencias: REFS,
+          figuras: [
+            { ordem: 1, secao: "Resultados", titulo: "Tempo até a consolidação por grupo", legenda: "Curva de consolidação segundo carga tabágica.", principal: true, url: A + "timeline-port.png" },
+            { ordem: 2, secao: "Métodos", legenda: "Distribuição da amostra por faixa etária e mecanismo de trauma.", url: A + "bars-land.png" },
+            { ordem: 3, secao: "Resultados", legenda: "Série temporal das reintervenções no seguimento.", url: A + "line-land.png" },
+          ],
+        },
+      },
+      {
+        rotulo: "F7-2B80 · Revisão sistemática",
+        nota: "1 infográfico landscape grande (PRISMA) + texto longo",
+        esperado: "Infográfico proeminente, texto rebatendo ao lado, sem vazio sob a figura.",
+        t: {
+          id: "F7-2B80", fase: 7, desenho: "Revisão sistemática", area: "Endocrinologia",
+          titulo: "Metformina versus intervenção dietética isolada na progressão do pré-diabetes: revisão sistemática",
+          autores: ["C. R. Lindner", "P. H. Maas"], orientador: "Orientador Exemplo",
+          afiliacao: "Faculdade de Medicina · UNIDAVI",
+          intro: "O pré-diabetes representa uma janela de oportunidade para a prevenção do diabetes tipo 2, condição de elevada carga global. Persiste, contudo, o debate sobre a estratégia inicial mais eficaz na atenção primária, sobretudo quanto ao papel da metformina frente à modificação isolada do estilo de vida em populações de risco intermediário.",
+          objetivos: "Comparar a eficácia da metformina e da intervenção dietética isolada na progressão do pré-diabetes para diabetes tipo 2.",
+          metodos: "Revisão sistemática conduzida segundo o PRISMA, com buscas em MEDLINE, Embase e Cochrane Central até dezembro de 2024. Foram incluídos ensaios clínicos randomizados em adultos com glicemia de jejum alterada ou intolerância à glicose. Dois revisores independentes realizaram a triagem, a extração de dados e a avaliação de risco de viés pela ferramenta RoB 2, com resolução de divergências por consenso.",
+          resultados: "Resultados esperados: síntese qualitativa dos desfechos de incidência de diabetes e, havendo homogeneidade clínica e estatística, metanálise de efeitos aleatórios com estimativa do risco relativo agrupado e análise de sensibilidade por qualidade metodológica.",
+          palavras: ["Estado pré-diabético", "Metformina", "Dieta", "Prevenção"],
+          referencias: REFS,
+          figuras: [
+            { ordem: 1, secao: "Métodos", titulo: "Fluxograma PRISMA", legenda: "Seleção dos estudos: identificação, triagem e inclusão.", principal: true, url: A + "prisma-wide.png" },
+          ],
+        },
+      },
+      {
+        rotulo: "Relato de caso (CARE)",
+        nota: "Campos CARE: Introdução · Apresentação do caso · Discussão · Conclusões",
+        esperado: "Rótulos CARE corretos e figura na seção certa (Apresentação do caso).",
+        t: {
+          id: "F7-CARE1", fase: 7, desenho: "Relato de caso", area: "Pediatria",
+          titulo: "Apresentação atípica de lúpus eritematoso sistêmico de início juvenil: relato de caso",
+          autores: ["E. T. Voss", "F. A. Krieger"], orientador: "Orientador Exemplo",
+          afiliacao: "Faculdade de Medicina · UNIDAVI",
+          intro: "O lúpus eritematoso sistêmico de início juvenil pode cursar com manifestações inespecíficas, retardando o diagnóstico e expondo o paciente a desfechos evitáveis. O reconhecimento de apresentações atípicas é, portanto, decisivo na prática pediátrica.",
+          metodos: "Adolescente de 14 anos admitida com febre prolongada, poliartralgia e citopenias. A investigação evidenciou anemia hemolítica, consumo de complemento e positividade para anti-DNA de dupla fita. Obteve-se consentimento informado dos responsáveis para o relato.",
+          resultados: "A constelação clínica e laboratorial preencheu os critérios classificatórios de LES. Discute-se o diagnóstico diferencial com infecções e neoplasias hematológicas, ressaltando o valor do painel imunológico precoce diante de febre de origem indeterminada na adolescência.",
+          conclusao: "O reconhecimento de apresentações atípicas reduz o atraso diagnóstico e melhora o prognóstico, justificando alto índice de suspeição em quadros febris arrastados com citopenias.",
+          palavras: ["Lúpus eritematoso sistêmico", "Adolescente", "Diagnóstico"],
+          referencias: REFS,
+          figuras: [
+            { ordem: 1, secao: "Métodos", titulo: "Evolução clínica e laboratorial", legenda: "Linha do tempo do caso, da admissão à resposta terapêutica.", principal: true, url: A + "timeline-port.png" },
+          ],
+        },
+      },
+      {
+        rotulo: "Coorte · 0 figuras",
+        nota: "Sem nenhuma figura — texto puro",
+        esperado: "Texto preenchendo o canvas (~100%), sem vazios. (DOC 4 sugere 3 colunas; o auto-fit atual usa 2 super-colunas — colunas 2/3 entram no item 3.)",
+        t: {
+          id: "F7-COH0", fase: 7, desenho: "Estudo de coorte", area: "Infectologia",
+          titulo: "Internação por neutropenia febril em hospital do interior de Santa Catarina (2020–2025): coorte retrospectiva",
+          autores: ["L. R. Bagatoli", "J. M. Heinzen"], orientador: "Orientador Exemplo",
+          afiliacao: "Faculdade de Medicina · UNIDAVI",
+          intro: "A neutropenia febril é uma emergência oncológica de elevada morbimortalidade, cuja condução depende do reconhecimento precoce e da estratificação adequada de risco. Em hospitais do interior, a caracterização do perfil das internações é fundamental para o dimensionamento de protocolos locais e para a alocação racional de recursos antimicrobianos.",
+          objetivos: "Descrever o perfil clínico-epidemiológico e os desfechos das internações por neutropenia febril ao longo de seis anos.",
+          metodos: "Coorte retrospectiva baseada em prontuários e no sistema de informação hospitalar. Foram incluídos todos os episódios de neutropenia febril em adultos entre 2020 e 2025. Coletaram-se idade, neoplasia de base, foco infeccioso, tempo até o antibiótico, necessidade de terapia intensiva e óbito intra-hospitalar. As variáveis foram analisadas de forma descritiva e por regressão de Poisson com variância robusta para os fatores associados ao óbito.",
+          resultados: "Resultados esperados: predomínio de neoplasias hematológicas, foco infeccioso identificável em parcela dos episódios e associação entre atraso na primeira dose de antimicrobiano e maior risco de desfecho desfavorável. Antecipa-se variação sazonal e diferença de letalidade conforme o escore de risco na admissão, subsidiando a revisão do protocolo institucional de atendimento.",
+          palavras: ["Neutropenia febril", "Antibioticoterapia", "Oncologia"],
+          referencias: REFS,
+          figuras: [],
+        },
+      },
+      {
+        rotulo: "Coorte · 4 figuras",
+        nota: "4 figuras em seções diferentes (Introdução, Métodos, Resultados ×2)",
+        esperado: "Todas as 4 figuras visíveis, nenhuma cortada; cada uma na sua seção.",
+        t: {
+          id: "F7-COH4", fase: 7, desenho: "Estudo de coorte", area: "Cardiologia",
+          titulo: "Fatores associados à reinternação em 30 dias após insuficiência cardíaca descompensada",
+          autores: ["H. D. Maiberg", "M. S. Voigt"], orientador: "Orientador Exemplo",
+          afiliacao: "Faculdade de Medicina · UNIDAVI",
+          intro: "A reinternação precoce por insuficiência cardíaca é marcador de qualidade assistencial e desfecho potencialmente evitável, com impacto direto sobre a sobrecarga do sistema de saúde.",
+          objetivos: "Identificar fatores associados à reinternação em 30 dias após internação por IC descompensada.",
+          metodos: "Coorte retrospectiva de pacientes internados por IC descompensada, com seguimento de 30 dias após a alta. Avaliaram-se classe funcional, fração de ejeção, conciliação medicamentosa e adesão ao seguimento ambulatorial.",
+          resultados: "Resultados esperados: classe funcional avançada e ausência de conciliação medicamentosa associadas a maior risco de reinternação. Espera-se gradiente entre fração de ejeção reduzida e frequência de novos eventos, com diferenças entre os perfis de transição de cuidado.",
+          palavras: ["Insuficiência cardíaca", "Readmissão", "Transição de cuidado"],
+          referencias: REFS,
+          figuras: [
+            { ordem: 1, secao: "Introdução", legenda: "Dispersão entre escore de risco e dias até a reinternação.", url: A + "scatter-sq.png" },
+            { ordem: 2, secao: "Métodos", legenda: "Fluxo de seleção e seguimento da coorte.", url: A + "prisma-wide.png" },
+            { ordem: 3, secao: "Resultados", titulo: "Reinternação por classe funcional", legenda: "Frequência de reinternação em 30 dias por estrato.", principal: true, url: A + "bars-land.png" },
+            { ordem: 4, secao: "Resultados", legenda: "Curva de risco acumulado ao longo do seguimento.", url: A + "line-land.png" },
+          ],
+        },
+      },
+      {
+        rotulo: "Retrato 3:4 · texto curto",
+        nota: "Figura alta (3:4) + texto curto — caso-limite conhecido",
+        esperado: "Figura proeminente; respiro aceitável (~70%). A curadora ajusta o tamanho no item 3.",
+        t: {
+          id: "F7-P34", fase: 7, desenho: "Revisão Sistemática e Metanálise", area: "Cardiologia",
+          titulo: "Betabloqueadores na IC com fração de ejeção preservada: revisão sistemática e metanálise",
+          autores: ["M. D. W. de Souza"], orientador: "Orientador Exemplo",
+          afiliacao: "Faculdade de Medicina · UNIDAVI",
+          intro: "O papel dos betabloqueadores na insuficiência cardíaca com fração de ejeção preservada permanece incerto, com evidências conflitantes entre os ensaios disponíveis.",
+          objetivos: "Estimar o efeito dos betabloqueadores sobre mortalidade e hospitalização na ICFEp.",
+          metodos: "Metanálise de ensaios randomizados, com efeitos aleatórios e avaliação de heterogeneidade.",
+          resultados: "Resultados esperados: efeito agrupado sumarizado no forest plot, com análise de sensibilidade por qualidade metodológica.",
+          palavras: ["Insuficiência cardíaca", "Betabloqueadores"],
+          referencias: REFS,
+          figuras: [
+            { ordem: 1, secao: "Resultados", titulo: "Forest plot — efeito agrupado", legenda: "Estimativas individuais e efeito combinado dos ensaios incluídos.", principal: true, url: A + "forest-port34.png" },
+          ],
+        },
+      },
+    ];
+    window.__CASES = CASES;
+
+    function Chip({ children, style }) {
+      return <div className="rev-ui" style={{ position:"fixed", zIndex:50, background:"rgba(10,20,34,0.86)", color:"#fff", border:"1px solid rgba(255,255,255,0.18)", borderRadius:12, padding:"10px 14px", backdropFilter:"blur(6px)", boxShadow:"0 8px 30px rgba(0,0,0,0.4)", ...style }}>{children}</div>;
+    }
+    function App() {
+      const [idx, setIdx] = React.useState(() => { const v = parseInt(localStorage.getItem("bateriaCaso") || "0", 10); return (Number.isFinite(v) && v >= 0 && v < CASES.length) ? v : 0; });
+      React.useEffect(() => { try { localStorage.setItem("bateriaCaso", String(idx)); } catch(e){} }, [idx]);
+      React.useEffect(() => { window.__setCase = (i) => setIdx(((i % CASES.length) + CASES.length) % CASES.length); }, []);
+      React.useEffect(() => {
+        const onKey = (e) => { if (e.key === "ArrowRight") setIdx((i) => (i + 1) % CASES.length); if (e.key === "ArrowLeft") setIdx((i) => (i - 1 + CASES.length) % CASES.length); };
+        window.addEventListener("keydown", onKey); return () => window.removeEventListener("keydown", onKey);
+      }, []);
+      const c = CASES[idx];
+      const tab = (on) => ({ border:"none", cursor:"pointer", borderRadius:8, padding:"6px 11px", fontSize:12.5, fontWeight:700, background:on?"#00ADEF":"rgba(255,255,255,0.10)", color:"#fff", whiteSpace:"nowrap" });
+      return (
+        <>
+          <div id="palco">
+            <PosterCompletoLandscape key={c.t.id} t={c.t} />
+          </div>
+          {/* topo: nome do caso + abas */}
+          <Chip style={{ top:14, left:14, right:14, display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>
+            <span style={{ fontSize:11, fontWeight:800, letterSpacing:0.8, color:"#00ADEF", textTransform:"uppercase" }}>Bateria DOC 4</span>
+            <span style={{ fontSize:13.5, fontWeight:800 }}>{idx+1}/6 · {c.rotulo}</span>
+            <span style={{ fontSize:12, opacity:0.78 }}>· {c.nota}</span>
+            <div style={{ marginLeft:"auto", display:"flex", gap:6 }}>
+              {CASES.map((cc, i) => <button key={i} style={tab(i===idx)} onClick={()=>setIdx(i)}>{i+1}</button>)}
+            </div>
+          </Chip>
+          {/* pé: resultado esperado + navegação */}
+          <Chip style={{ bottom:14, left:14, maxWidth:620, display:"flex", gap:10, alignItems:"flex-start" }}>
+            <span style={{ fontSize:11, fontWeight:800, color:"#00ADEF", textTransform:"uppercase", letterSpacing:0.6, flexShrink:0, marginTop:1 }}>Esperado</span>
+            <span style={{ fontSize:12.5, lineHeight:1.4, opacity:0.92 }}>{c.esperado}</span>
+          </Chip>
+          <Chip style={{ bottom:14, right:14, display:"flex", gap:8, alignItems:"center" }}>
+            <button style={tab(false)} onClick={()=>setIdx((i)=>(i-1+CASES.length)%CASES.length)}>◀</button>
+            <button style={tab(false)} onClick={()=>setIdx((i)=>(i+1)%CASES.length)}>▶</button>
+          </Chip>
+        </>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

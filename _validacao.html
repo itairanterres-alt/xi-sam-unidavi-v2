@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XI SAM · Validação do motor de layout</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet" />
+  <style>
+    *{ box-sizing:border-box; }
+    html,body{ margin:0; padding:0; height:100%; }
+    body{ font-family:'IBM Plex Sans', system-ui, sans-serif; color:#0C1A2B; background:#0A1422; overflow:hidden; }
+    #root{ position:fixed; inset:0; }
+    #bar{ position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:99; display:flex; gap:8px; background:rgba(1,30,66,.92); padding:8px 12px; border-radius:999px; box-shadow:0 8px 26px rgba(0,0,0,.4); }
+    #bar button{ border:none; border-radius:999px; padding:7px 14px; font:600 13px 'IBM Plex Sans',sans-serif; cursor:pointer; background:rgba(255,255,255,.16); color:#fff; }
+    #bar button.on{ background:#00ADEF; }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="bar"></div>
+  <div id="root"></div>
+
+  <script src="data.js"></script>
+  <script src="esquema.js"></script>
+  <script src="ajuste.js"></script>
+  <script type="text/babel" src="lib.jsx"></script>
+  <script type="text/babel" src="posters.jsx"></script>
+
+  <script type="text/babel" data-presets="react">
+  (function () {
+    const { useState } = React;
+
+    /* ---- gera imagens de teste como data-URL (sem depender de assets) ---- */
+    function img(w, h, label, bands) {
+      const c = document.createElement("canvas"); c.width = w; c.height = h;
+      const x = c.getContext("2d");
+      x.fillStyle = "#fff"; x.fillRect(0, 0, w, h);
+      x.fillStyle = "#0B3B73"; x.fillRect(0, 0, w, Math.round(h*0.10));
+      x.fillStyle = "#fff"; x.font = "bold " + Math.round(w*0.05) + "px sans-serif";
+      x.fillText(label, 18, Math.round(h*0.067));
+      const bh = Math.round((h*0.86) / bands);
+      for (let i=0;i<bands;i++){
+        const y = Math.round(h*0.11) + i*bh;
+        x.fillStyle = i%2 ? "#E8F1FB" : "#D2E4F7"; x.fillRect(10, y, w-20, bh-8);
+        x.fillStyle = "#0B3B73"; x.font = Math.round(bh*0.30)+"px sans-serif";
+        x.fillText("dado " + (i+1) + " — " + Math.round(Math.random()*90+10) + "%", 24, y + bh*0.6);
+      }
+      x.strokeStyle = "#0B3B73"; x.lineWidth = 4; x.strokeRect(2,2,w-4,h-4);
+      return c.toDataURL("image/png");
+    }
+    const figDensa = img(640, 1480, "INFOGRÁFICO", 11);   // vertical alta e densa
+    const figLarga = img(1480, 620, "GRÁFICO", 4);        // landscape
+
+    const TXT = "Os análogos de GLP-1 ganharam ampla difusão no manejo da obesidade e do diabetes tipo 2. Esta revisão sistematiza os achados de literatura sobre desfechos relevantes, avaliando o equilíbrio entre benefício metabólico e potenciais efeitos adversos relatados em coortes recentes. A heterogeneidade dos estudos exige cautela na interpretação dos dados agregados, mas o sinal observado é consistente entre as séries analisadas e merece acompanhamento prospectivo dedicado. ";
+
+    function refs(n){ const a=[]; for(let i=1;i<=n;i++) a.push(i+". Autor "+i+" et al. Título do estudo de referência número "+i+". Revista Científica. 2024;"+(10+i)+"("+i+"):"+(100+i)+"-"+(110+i)+"."); return a.join("\n"); }
+
+    const CASO_A = {
+      id: "A-101", area: "Saúde Mental", fase: 5, desenho: "Revisão de literatura",
+      titulo: "Efeitos psiquiátricos associados ao uso de análogos de GLP-1",
+      autores: ["Ana Souza", "Bruno Lima", "Carla Dias"], orientador: "Prof. Dr. M. Rocha",
+      afiliacao: "Medicina UNIDAVI", palavras: ["GLP-1", "psiquiatria", "obesidade"],
+      intro: TXT + TXT, objetivos: TXT, metodos: TXT + TXT,
+      resultados: TXT + TXT + TXT,
+      referencias: refs(9),
+      figuras: [
+        { ordem: 1, secao: "Resultados", principal: true, titulo: "Eventos por sistema", legenda: "Distribuição de eventos psiquiátricos relatados.", url: figDensa },
+        { ordem: 2, secao: "Métodos", titulo: "Fluxo PRISMA", legenda: "Seleção de estudos.", url: figLarga },
+      ],
+    };
+    const CASO_B = {
+      id: "B-202", area: "Endocrinologia", fase: 5, desenho: "Estudo transversal",
+      titulo: "Agonorexia associada ao uso prolongado de agonistas de GLP-1",
+      autores: ["Diego Reis", "Elisa Mota"], orientador: "Profa. Dra. P. Alves",
+      afiliacao: "Medicina UNIDAVI", palavras: ["GLP-1", "apetite", "transversal"],
+      intro: TXT + TXT, objetivos: TXT, metodos: TXT + TXT, resultados: TXT + TXT,
+      referencias: refs(7),
+      figuras: [
+        { ordem: 1, secao: "Resultados", principal: true, titulo: "Curva de apetite", legenda: "Variação relatada ao longo de 12 semanas.", url: figLarga },
+        { ordem: 2, secao: "Introdução", titulo: "Mecanismo", legenda: "Esquema receptor.", url: figLarga },
+      ],
+    };
+
+    function App(){
+      const [caso, setCaso] = useState("A");
+      const [aj, setAj] = useState("");   // ajuste_layout string
+      const base = caso === "A" ? CASO_A : CASO_B;
+      const t = { ...base, ajuste_layout: aj };
+      // monta string de ajuste pela API real (SAM_AJUSTE.montar)
+      const aplicar = (tamanho) => {
+        if (!tamanho){ setAj(""); return; }
+        const figs = base.figuras.map((f,i)=> i===0 ? {...f, tamanho, lado:"direita"} : {...f});
+        const s = window.SAM_AJUSTE ? window.SAM_AJUSTE.montar(figs, 2, base.desenho) : "";
+        setAj(s);
+      };
+      React.useEffect(()=>{
+        const bar = document.getElementById("bar");
+        bar.innerHTML = "";
+        const mk = (label,on,fn)=>{ const b=document.createElement("button"); b.textContent=label; if(on)b.className="on"; b.onclick=fn; bar.appendChild(b); };
+        mk("Caso A · densa", caso==="A", ()=>{setCaso("A");setAj("");});
+        mk("Caso B · larga", caso==="B", ()=>{setCaso("B");setAj("");});
+        const sep=document.createElement("span"); sep.style.cssText="width:1px;background:rgba(255,255,255,.25);margin:0 4px;"; bar.appendChild(sep);
+        ["","M","G","C"].forEach(sz=> mk(sz||"Auto", aj.includes(sz?("="+sz):"")&&(sz?aj.indexOf("="+sz)>=0:aj===""), ()=>aplicar(sz)) );
+      });
+      return <PosterCompletoLandscape key={caso+":"+aj} t={t} />;
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  })();
+  </script>
+</body>
+</html>

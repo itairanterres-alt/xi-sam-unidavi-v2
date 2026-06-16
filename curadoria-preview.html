@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XI SAM 2026 · Curadoria — prévia da ficha (revisão)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet" />
+  <style>
+    *{ box-sizing:border-box; }
+    html,body{ margin:0; padding:0; }
+    body{ font-family:'IBM Plex Sans', system-ui, -apple-system, sans-serif; color:#0C1A2B; background:#F7F9FB; }
+    .girando{ animation:girar 1s linear infinite; }
+    @keyframes girar{ to{ transform:rotate(360deg); } }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="app"></div>
+  <!-- esquema + contrato (clássicos) e o app da curadoria (exporta SAM_CURADORIA) -->
+  <script src="esquema.js"></script>
+  <script src="ajuste.js"></script>
+  <script src="previa.js"></script>
+  <script type="text/babel" src="curadoria-app.jsx"></script>
+
+  <script type="text/babel" data-presets="react">
+    /* Harness de revisão: monta a Ficha da curadoria com um trabalho de
+       exemplo (4 figuras) para revisar o painel de Ajuste de layout (item 3).
+       Salvar tenta o backend (falha no preview) — o FORMATO já é verificado
+       por SAM_AJUSTE.montar. */
+    const A = "assets/bateria/";
+    const FIX = {
+      id: "F7-COH4", fase: 7, desenho: "Estudo de coorte", area: "Cardiologia", status: "enviado",
+      titulo: "Fatores associados à reinternação em 30 dias após insuficiência cardíaca descompensada",
+      autores: "H. D. Maiberg, M. S. Voigt", orientador: "Orientador Exemplo",
+      introducao: "A reinternação precoce por insuficiência cardíaca é marcador de qualidade assistencial e desfecho potencialmente evitável.",
+      objetivos: "Identificar fatores associados à reinternação em 30 dias após internação por IC descompensada.",
+      metodos: "Coorte retrospectiva de pacientes internados por IC descompensada, com seguimento de 30 dias após a alta.",
+      resultados: "Resultados esperados: classe funcional avançada e ausência de conciliação medicamentosa associadas a maior risco.",
+      palavras: "Insuficiência cardíaca, Readmissão, Transição de cuidado",
+      ajuste_layout: JSON.stringify({ v: 3, colunas: 2, figuras: { "Metodologia:0": { tamanho: "G", lado: "esquerda" } } }),
+      figuras: [
+        { ordem: 1, secao: "Introdução", legenda: "Dispersão entre escore de risco e dias até a reinternação.", url: A + "scatter-sq.png" },
+        { ordem: 2, secao: "Métodos", legenda: "Fluxo de seleção e seguimento da coorte.", url: A + "prisma-wide.png" },
+        { ordem: 3, secao: "Resultados", legenda: "Frequência de reinternação em 30 dias por estrato.", principal: true, url: A + "bars-land.png" },
+        { ordem: 4, secao: "Resultados", legenda: "Curva de risco acumulado ao longo do seguimento.", url: A + "line-land.png" },
+      ],
+    };
+    function Boot() {
+      const F = window.SAM_CURADORIA && window.SAM_CURADORIA.Ficha;
+      if (!F) return React.createElement("div", { style:{ padding:40 } }, "Carregando curadoria…");
+      return React.createElement(F, { t: FIX, email: "curadoria@unidavi.edu.br", senha: "demo", onVoltar: () => {}, onAtualizar: () => {} });
+    }
+    ReactDOM.createRoot(document.getElementById("app")).render(React.createElement(Boot));
+  </script>
+</body>
+</html>

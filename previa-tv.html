@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XI SAM 2026 · Prévia na TV</title>
+  <meta name="ext-resource-dependency" content="assets/logo-unidavi.png" data-resource-id="logoUnidavi" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet" />
+  <style>
+    *{ box-sizing:border-box; }
+    html,body{ margin:0; padding:0; height:100%; }
+    body{ font-family:'IBM Plex Sans', system-ui, -apple-system, sans-serif; color:#0C1A2B; background:#0A1422; -webkit-font-smoothing:antialiased; overflow:hidden; }
+    #root{ position:fixed; inset:0; }
+    .sam-spin{ animation:samSpin .9s linear infinite; }
+    @keyframes samSpin{ to{ transform:rotate(360deg); } }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- conjunto canônico do telão: data + esquema + contrato + lib + componentes -->
+  <script src="data.js"></script>
+  <script src="esquema.js"></script>
+  <script src="ajuste.js"></script>
+  <script type="text/babel" src="lib.jsx"></script>
+  <script type="text/babel" src="posters.jsx"></script>
+
+  <script type="text/babel" data-presets="react">
+  (function () {
+    /* ============================================================
+       PRÉVIA NA TV — renderiza UM pôster pelo renderizador REAL e
+       sobrepõe uma camada de EDIÇÃO DIRETA das figuras (item 3, UX
+       arrastar-e-soltar). Ajustes encaixam no contrato DISCRETO
+       (P/M/G/XG + Esquerda/Direita); o texto se recompõe sozinho
+       (o FIT do CorpoRevista reduz/cresce a fonte conforme a figura).
+
+       Protocolo com a janela-mãe (previa.js):
+         mãe → iframe : {tipo:"sam-previa", trabalho}     (carga inicial)
+                        {tipo:"sam-colunas", colunas}     (2/3)
+                        {tipo:"sam-reset"}                (volta ao automático)
+                        {tipo:"sam-editavel", editavel}
+         iframe → mãe : {tipo:"sam-ajuste-pronto", ajuste_layout, colunas, temAjuste}
+       ============================================================ */
+    const { useState, useEffect, useRef, useLayoutEffect, useCallback } = React;
+    const SIZES = ["", "P", "M", "G", "XG"];           // "" = Auto
+    const SIZE_LABEL = { "": "Auto", P: "Pequena", M: "Média", G: "Grande", XG: "Faixa cheia" };
+
+    function lerInicial() {
+      try { if (window.parent && window.parent !== window && window.parent.__SAM_PREVIA_T) return window.parent.__SAM_PREVIA_T; } catch (e) {}
+      try { const raw = localStorage.getItem("sam_previa_tv"); if (raw) return JSON.parse(raw); } catch (e) {}
+      return null;
+    }
+    /* normaliza: garante ordem 1..N (chave de casamento com a camada de edição) */
+    function normFigs(t) {
+      const figs = Array.isArray(t.figuras) ? t.figuras : [];
+      return figs.map((f, i) => ({ ...f, ordem: i + 1 }));
+    }
+    function postPronto(ajuste_layout, colunas) {
+      try { window.parent.postMessage({ tipo: "sam-ajuste-pronto", ajuste_layout, colunas, temAjuste: !!ajuste_layout }, "*"); } catch (e) {}
+    }
+
+    function App() {
+      const [base, setBase] = useState(lerInicial);          // trabalho cru (sem ajuste aplicado nos controles)
+      const [colunas, setColunas] = useState(2);
+      const [figAj, setFigAj] = useState([]);                // [{tamanho,lado}] alinhado a figs por índice
+      const [editavel, setEditavel] = useState(true);
+      const [hint, setHint] = useState(null);                // feedback efêmero ("Média", "→ Direita"…)
+
+      // (re)inicializa a partir de um trabalho recebido
+      const carregar = useCallback((t) => {
+        const figs = normFigs(t);
+        const aj = window.SAM_AJUSTE ? window.SAM_AJUSTE.ler(t.ajuste_layout) : null;
+        const chaves = window.SAM_AJUSTE ? window.SAM_AJUSTE.chavesDe(figs, t.desenho) : figs.map((_, i) => "f" + i);
+        setBase({ ...t, figuras: figs });
+        setColunas(aj && aj.colunas === 3 ? 3 : 2);
+        setFigAj(figs.map((f, i) => { const o = (aj && aj.figuras && aj.figuras[chaves[i]]) || {}; return { tamanho: o.tamanho || "", lado: o.lado || "", secao: o.secao || "" }; }));
+      }, []);
+
+      useEffect(() => { if (base) carregar(base); /* eslint-disable-next-line */ }, []);
+
+      // mensagens da janela-mãe
+      useEffect(() => {
+        const onMsg = (e) => {
+          const d = e.data || {};
+          if (d.tipo === "sam-previa" && d.trabalho) carregar(d.trabalho);
+          else if (d.tipo === "sam-colunas") setColunas(d.colunas === 3 ? 3 : 2);
+          else if (d.tipo === "sam-editavel") setEditavel(!!d.editavel);
+          else if (d.tipo === "sam-reset") { setColunas(2); setFigAj((arr) => arr.map(() => ({ tamanho: "", lado: "", secao: "" }))); flash("Layout automático restaurado"); }
+        };
+        window.addEventListener("message", onMsg);
+        return () => window.removeEventListener("message", onMsg);
+      }, [carregar]);
+
+      // figuras com ajuste aplicado (na ordem original) → string do contrato
+      const figs = base ? base.figuras : [];
+      const figsComAj = figs.map((f, i) => ({ ...f, tamanho: figAj[i] && figAj[i].tamanho, lado: figAj[i] && figAj[i].lado, secaoOverride: figAj[i] && figAj[i].secao }));
+      const ajusteStr = (base && window.SAM_AJUSTE) ? window.SAM_AJUSTE.montar(figsComAj, colunas, base.desenho) : "";
+      const trabalhoLive = base ? { ...base, ajuste_layout: ajusteStr } : null;
+
+      // avisa a mãe a cada mudança (para Salvar / refletir colunas / habilitar reset)
+      useEffect(() => { if (base) postPronto(ajusteStr, colunas); }, [ajusteStr, colunas, base]);
+
+      const flash = (txt) => { setHint(txt); clearTimeout(flash._t); flash._t = setTimeout(() => setHint(null), 1100); };
+      const setSize = (idx, val) => { setFigAj((arr) => arr.map((x, j) => j === idx ? { ...x, tamanho: val } : x)); flash(SIZE_LABEL[val] || "Auto"); };
+      const setSide = (idx, val) => { setFigAj((arr) => arr.map((x, j) => j === idx ? { ...x, lado: val } : x)); flash(val === "esquerda" ? "← Esquerda" : val === "direita" ? "Direita →" : "Lado automático"); };
+      const secOpts = (base && window.SAM_ESQUEMA) ? window.SAM_ESQUEMA.secoesDe(base).filter((s) => s.sec).map((s) => ({ sec: s.sec, rotulo: s.rotulo })) : [];
+      const secLabel = (v) => { const o = secOpts.find((x) => x.sec === v); return o ? o.rotulo : v; };
+      const setSecao = (idx, val) => { setFigAj((arr) => arr.map((x, j) => j === idx ? { ...x, secao: val } : x)); flash(val ? ("→ " + secLabel(val)) : "Seção automática"); };
+
+      if (!base) return <div style={{ position:"fixed", inset:0, display:"flex", alignItems:"center", justifyContent:"center", color:"#8A99AB", fontSize:15 }}>Nada para exibir nesta prévia.</div>;
+
+      return (
+        <>
+          <PosterCompletoLandscape key={(base.id || "") + ":" + colunas} t={trabalhoLive} />
+          {editavel && <Editor figs={figs} figAj={figAj} onSize={setSize} onSide={setSide} onSecao={setSecao} secOpts={secOpts} ajusteStr={ajusteStr} colunas={colunas} />}
+          {hint && (
+            <div style={{ position:"fixed", left:"50%", bottom:24, transform:"translateX(-50%)", zIndex:60, background:"rgba(2,40,90,0.94)", color:"#fff", padding:"8px 18px", borderRadius:999, fontSize:14, fontWeight:700, boxShadow:"0 8px 26px rgba(0,0,0,0.4)", pointerEvents:"none" }}>{hint}</div>
+          )}
+        </>
+      );
+    }
+
+    /* ===== Camada de edição direta sobre as figuras renderizadas ===== */
+    function Editor({ figs, figAj, onSize, onSide, onSecao, secOpts, ajusteStr, colunas }) {
+      const [rects, setRects] = useState([]);
+      const [hover, setHover] = useState(null);
+      const [sel, setSel] = useState(null);                  // figura "fixada" por toque/clique (touch-friendly)
+      const [drag, setDrag] = useState(null);   // {ordem, modo:'size'|'side', ...}
+      const hideT = useRef(null);
+
+      // mede as figuras (coords de tela; já consideram o transform de escala)
+      useLayoutEffect(() => {
+        let raf;
+        const medir = () => {
+          const els = [...document.querySelectorAll("#root [data-fig-ordem]")];
+          const seen = {}; const out = [];
+          els.forEach((el) => {
+            const r = el.getBoundingClientRect();
+            if (r.left < -9000 || r.width < 6) return;          // ignora a cópia de MEDIÇÃO (offscreen)
+            const ordem = +el.getAttribute("data-fig-ordem");
+            if (seen[ordem]) return; seen[ordem] = 1;            // 1 região por figura
+            out.push({ ordem, x: r.left, y: r.top, w: r.width, h: r.height });
+          });
+          setRects(out);
+        };
+        medir(); raf = requestAnimationFrame(medir);
+        const t1 = setTimeout(medir, 260), t2 = setTimeout(medir, 760), t3 = setTimeout(medir, 1400);
+        const root = document.getElementById("root");
+        const ro = new ResizeObserver(medir); if (root) ro.observe(root);
+        document.querySelectorAll("#root [data-fig-ordem] img").forEach((im) => { if (!im.complete) im.addEventListener("load", medir, { once: true }); });
+        window.addEventListener("resize", medir);
+        return () => { cancelAnimationFrame(raf); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); ro.disconnect(); window.removeEventListener("resize", medir); };
+      }, [ajusteStr, colunas, figs.length]);
+
+      const showHover = (ordem) => { clearTimeout(hideT.current); setHover(ordem); };
+      const hideHover = () => { clearTimeout(hideT.current); hideT.current = setTimeout(() => setHover(null), 140); };
+
+      // arraste de redimensionamento (catraca P→M→G→XG) e de lado
+      useEffect(() => {
+        if (!drag) return;
+        const onMove = (e) => {
+          const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+          if (drag.modo === "size") {
+            const step = Math.round(dx / 64);
+            let idx = Math.max(1, Math.min(4, drag.baseIdx + step)); // 1..4 = P..XG
+            if (idx !== drag.curIdx) { setDrag((d) => ({ ...d, curIdx: idx })); onSize(drag.idx, SIZES[idx]); }
+          } else if (drag.modo === "side") {
+            if (Math.abs(dx) > 34) { const lado = dx < 0 ? "esquerda" : "direita"; if (lado !== drag.curLado) { setDrag((d) => ({ ...d, curLado: lado, moved: true })); onSide(drag.idx, lado); } }
+          }
+        };
+        const onUp = () => setDrag(null);
+        window.addEventListener("pointermove", onMove);
+        window.addEventListener("pointerup", onUp);
+        return () => { window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp); };
+      }, [drag, onSize, onSide]);
+
+      const startSize = (ordem, idx, e) => { e.preventDefault(); e.stopPropagation(); const cur = figAj[idx] ? SIZES.indexOf(figAj[idx].tamanho || "") : 0; const baseIdx = cur > 0 ? cur : 2; setDrag({ ordem, idx, modo: "size", x0: e.clientX, y0: e.clientY, baseIdx, curIdx: baseIdx }); };
+      const startSide = (ordem, idx, e) => { if (e.button !== 0) return; setDrag({ ordem, idx, modo: "side", x0: e.clientX, y0: e.clientY, curLado: figAj[idx] && figAj[idx].lado, moved: false }); };
+
+      const Seg = ({ active, children, onClick, title }) => (
+        <button title={title} onPointerDown={(e)=>{e.stopPropagation();}} onMouseDown={(e)=>{e.preventDefault();e.stopPropagation();}} onClick={(e)=>{e.stopPropagation();onClick();}}
+          style={{ border:"none", borderRadius:7, padding:"7px 12px", fontSize:13.5, fontWeight:700, cursor:"pointer", background: active?"#00ADEF":"rgba(255,255,255,0.16)", color:"#fff", lineHeight:1.2, minWidth:32, touchAction:"manipulation" }}>{children}</button>
+      );
+
+      return (
+        <div style={{ position:"fixed", inset:0, zIndex:40, pointerEvents:"none" }}>
+          {/* fundo que captura toque fora das figuras para "desfixar" (só quando há seleção) */}
+          <div onClick={() => setSel(null)} style={{ position:"absolute", inset:0, pointerEvents: sel!=null ? "auto" : "none" }} />
+          {rects.map((r) => {
+            const idx = r.ordem - 1; if (idx < 0 || idx >= figs.length) return null;
+            const a = figAj[idx] || {}; const ativo = hover === r.ordem || sel === r.ordem || (drag && drag.ordem === r.ordem);
+            const xg = a.tamanho === "XG";
+            const acima = (r.y + r.h + 46) > window.innerHeight; // barra abaixo, salvo perto do rodapé
+            return (
+              <div key={r.ordem}
+                onMouseEnter={() => showHover(r.ordem)} onMouseLeave={hideHover}
+                onPointerDown={(e) => startSide(r.ordem, idx, e)}
+                onClick={(e) => { e.stopPropagation(); setSel(r.ordem); }}
+                style={{ position:"absolute", left:r.x, top:r.y, width:r.w, height:r.h, pointerEvents:"auto", cursor: drag && drag.modo==="side" ? "grabbing" : "grab",
+                  outline: ativo ? "2.5px solid #00ADEF" : "2px solid rgba(0,173,239,0.0)", outlineOffset:1, borderRadius:10, transition:"outline-color .12s",
+                  boxShadow: ativo ? "0 0 0 9999px rgba(10,20,34,0.04)" : "none" }}>
+                {/* etiqueta de tamanho atual (canto) */}
+                {ativo && (
+                  <div style={{ position:"absolute", top:6, right:6, background:"rgba(2,40,90,0.92)", color:"#fff", fontSize:10.5, fontWeight:800, letterSpacing:0.4, padding:"2px 7px", borderRadius:6, pointerEvents:"none" }}>
+                    {a.tamanho ? a.tamanho : "AUTO"}{a.lado ? (a.lado==="esquerda"?" ◀":" ▶") : ""}
+                  </div>
+                )}
+                {/* alça de redimensionar (catraca por arraste) */}
+                {ativo && !xg && (
+                  <div onPointerDown={(e) => startSize(r.ordem, idx, e)} title="Arraste para redimensionar"
+                    style={{ position:"absolute", right:-9, bottom:-9, width:28, height:28, borderRadius:7, background:"#00ADEF", border:"2px solid #fff", cursor:"nwse-resize", boxShadow:"0 2px 8px rgba(0,0,0,0.35)", display:"flex", alignItems:"center", justifyContent:"center", touchAction:"none" }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"><path d="M21 3 3 21M14 21h7v-7"/></svg>
+                  </div>
+                )}
+                {/* mini-barra: tamanho + lado + auto (só no hover; fora da figura) */}
+                {ativo && (
+                  <div onMouseEnter={() => showHover(r.ordem)} onMouseLeave={hideHover} onPointerDown={(e)=>e.stopPropagation()} onClick={(e)=>e.stopPropagation()}
+                    style={{ position:"absolute", left:0, [acima?"bottom":"top"]: "calc(100% + 8px)", display:"flex", gap:6, alignItems:"center", background:"rgba(1,40,90,0.96)", padding:"6px 9px", borderRadius:10, boxShadow:"0 6px 22px rgba(0,0,0,0.4)", whiteSpace:"nowrap" }}>
+                    {["P","M","G","XG"].map((v) => <Seg key={v} active={a.tamanho===v} onClick={()=>onSize(idx, a.tamanho===v?"":v)} title={SIZE_LABEL[v]}>{v}</Seg>)}
+                    <span style={{ width:1, height:16, background:"rgba(255,255,255,0.25)", margin:"0 2px" }} />
+                    <Seg active={a.lado==="esquerda"} onClick={()=>onSide(idx, a.lado==="esquerda"?"":"esquerda")} title="Esquerda">◀</Seg>
+                    <Seg active={a.lado==="direita"} onClick={()=>onSide(idx, a.lado==="direita"?"":"direita")} title="Direita">▶</Seg>
+                    <span style={{ width:1, height:16, background:"rgba(255,255,255,0.25)", margin:"0 2px" }} />
+                    {["P","M","G","C","XG"].map(sz=><Seg key={sz} active={a.tamanho===sz} onClick={()=>onSize(idx,sz)} title={sz==="C"?"Central (70%, centralizado, texto ao redor)":sz==="XG"?"Largura cheia":sz}>{sz}</Seg>)}
+                    <span style={{width:1,height:16,background:"rgba(255,255,255,0.25)",margin:"0 2px"}} />
+                    <Seg active={!a.tamanho && !a.lado && !a.secao} onClick={()=>{ onSize(idx,""); onSide(idx,""); onSecao(idx,""); }} title="Automático">Auto</Seg>
+                    {secOpts && secOpts.length > 0 && (
+                      <>
+                        <span style={{ width:1, height:16, background:"rgba(255,255,255,0.25)", margin:"0 2px" }} />
+                        <select value={a.secao || ""} title="Seção onde a figura aparece"
+                          onPointerDown={(e)=>e.stopPropagation()} onMouseDown={(e)=>e.stopPropagation()} onClick={(e)=>e.stopPropagation()}
+                          onChange={(e)=>{ e.stopPropagation(); onSecao(idx, e.target.value); }}
+                          style={{ border:"none", borderRadius:7, padding:"7px 8px", fontSize:12.5, fontWeight:700, cursor:"pointer", background: a.secao ? "#00ADEF" : "rgba(255,255,255,0.16)", color:"#fff", lineHeight:1.2, maxWidth:160, touchAction:"manipulation" }}>
+                          <option value="" style={{ color:"#111" }}>Seção: automática</option>
+                          {secOpts.map((o) => <option key={o.sec} value={o.sec} style={{ color:"#111" }}>{o.rotulo}</option>)}
+                        </select>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  })();
+  </script>
+</body>
+</html>
