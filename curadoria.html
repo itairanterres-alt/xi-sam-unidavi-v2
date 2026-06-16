@@ -3,174 +3,51 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>XI SAM · Validação do motor de layout</title>
+  <title>XI SAM 2026 · Curadoria editorial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet" />
+  <meta name="ext-resource-dependency" content="assets/logo-strip.jpeg" data-resource-id="logoStrip" />
   <style>
     *{ box-sizing:border-box; }
-    html,body{ margin:0; padding:0; height:100%; }
-    body{ font-family:'IBM Plex Sans', system-ui, sans-serif; color:#0C1A2B; background:#0A1422; overflow:hidden; }
-    #root{ position:fixed; inset:0; }
-    #bar{ position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:99; display:flex; gap:8px; background:rgba(1,30,66,.92); padding:8px 12px; border-radius:999px; box-shadow:0 8px 26px rgba(0,0,0,.4); }
-    #bar button{ border:none; border-radius:999px; padding:7px 14px; font:600 13px 'IBM Plex Sans',sans-serif; cursor:pointer; background:rgba(255,255,255,.16); color:#fff; }
-    #bar button.on{ background:#00ADEF; }
+    html,body{ margin:0; padding:0; }
+    body{ font-family:'IBM Plex Sans', system-ui, -apple-system, sans-serif; color:#0C1A2B; background:#F7F9FB; -webkit-font-smoothing:antialiased; }
+    textarea,input,select{ outline:none; font-family:inherit; }
+    textarea:focus,input:focus,select:focus{ border-color:#00ADEF !important; box-shadow:0 0 0 3px #00ADEF22; }
+    #root{ min-height:100vh; }
+    .girando{ animation:girar 1s linear infinite; }
+    @keyframes girar{ to{ transform:rotate(360deg); } }
+    @media(max-width:520px){ .cur-email{ display:none; } .lbl-sair{ display:none; } }
   </style>
-  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js" crossorigin="anonymous"></script>
+
+  <!-- React + Babel (versões fixadas) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 </head>
 <body>
-  <div id="bar"></div>
   <div id="root"></div>
 
-  <script src="data.js"></script>
+  <template id="__bundler_thumbnail" data-bg-color="#023E88">
+    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="800" fill="#023E88"/>
+      <rect x="360" y="250" width="480" height="300" rx="20" fill="#ffffff"/>
+      <rect x="392" y="290" width="240" height="18" rx="9" fill="#023E88"/>
+      <rect x="392" y="326" width="416" height="13" rx="6" fill="#cdd9e6"/>
+      <rect x="392" y="352" width="416" height="13" rx="6" fill="#cdd9e6"/>
+      <rect x="392" y="430" width="180" height="54" rx="12" fill="#1F8A5B"/>
+      <rect x="588" y="430" width="180" height="54" rx="12" fill="#ffffff" stroke="#C0392B" stroke-width="3"/>
+      <circle cx="765" cy="300" r="14" fill="#B07A18"/>
+      <text x="600" y="640" font-family="'IBM Plex Sans',sans-serif" font-size="50" font-weight="800" fill="#ffffff" text-anchor="middle">Curadoria SAM 2026</text>
+      <text x="600" y="688" font-family="'IBM Plex Sans',sans-serif" font-size="24" font-weight="500" fill="#00ADEF" text-anchor="middle">Gestão editorial · Medicina UNIDAVI</text>
+    </svg>
+  </template>
+
+  <!-- Esquema de seções por desenho (fonte única) + contrato ajuste_layout — clássicos -->
   <script src="esquema.js"></script>
   <script src="ajuste.js"></script>
-  <script type="text/babel" src="lib.jsx"></script>
-  <script type="text/babel" src="posters.jsx"></script>
-
-  <script type="text/babel" data-presets="react">
-  (function () {
-    const { useState } = React;
-
-    /* ---- gera imagens de teste como data-URL (sem depender de assets) ---- */
-    function img(w, h, label, bands) {
-      const c = document.createElement("canvas"); c.width = w; c.height = h;
-      const x = c.getContext("2d");
-      x.fillStyle = "#fff"; x.fillRect(0, 0, w, h);
-      x.fillStyle = "#0B3B73"; x.fillRect(0, 0, w, Math.round(h*0.10));
-      x.fillStyle = "#fff"; x.font = "bold " + Math.round(w*0.05) + "px sans-serif";
-      x.fillText(label, 18, Math.round(h*0.067));
-      const bh = Math.round((h*0.86) / bands);
-      for (let i=0;i<bands;i++){
-        const y = Math.round(h*0.11) + i*bh;
-        x.fillStyle = i%2 ? "#E8F1FB" : "#D2E4F7"; x.fillRect(10, y, w-20, bh-8);
-        x.fillStyle = "#0B3B73"; x.font = Math.round(bh*0.30)+"px sans-serif";
-        x.fillText("dado " + (i+1) + " — " + Math.round(Math.random()*90+10) + "%", 24, y + bh*0.6);
-      }
-      x.strokeStyle = "#0B3B73"; x.lineWidth = 4; x.strokeRect(2,2,w-4,h-4);
-      return c.toDataURL("image/png");
-    }
-    const figDensa = img(640, 1480, "INFOGRÁFICO", 11);   // vertical alta e densa
-    const figLarga = img(1480, 620, "GRÁFICO", 4);        // landscape
-
-    const TXT = "Os análogos de GLP-1 ganharam ampla difusão no manejo da obesidade e do diabetes tipo 2. Esta revisão sistematiza os achados de literatura sobre desfechos relevantes, avaliando o equilíbrio entre benefício metabólico e potenciais efeitos adversos relatados em coortes recentes. A heterogeneidade dos estudos exige cautela na interpretação dos dados agregados, mas o sinal observado é consistente entre as séries analisadas e merece acompanhamento prospectivo dedicado. ";
-
-    function refs(n){ const a=[]; for(let i=1;i<=n;i++) a.push(i+". Autor "+i+" et al. Título do estudo de referência número "+i+". Revista Científica. 2024;"+(10+i)+"("+i+"):"+(100+i)+"-"+(110+i)+"."); return a.join("\n"); }
-
-    const CASO_A = {
-      id: "A-101", area: "Saúde Mental", fase: 5, desenho: "Revisão de literatura",
-      titulo: "Efeitos psiquiátricos associados ao uso de análogos de GLP-1",
-      autores: ["Ana Souza", "Bruno Lima", "Carla Dias"], orientador: "Prof. Dr. M. Rocha",
-      afiliacao: "Medicina UNIDAVI", palavras: ["GLP-1", "psiquiatria", "obesidade"],
-      intro: TXT + TXT, objetivos: TXT, metodos: TXT + TXT,
-      resultados: TXT + TXT + TXT,
-      referencias: refs(9),
-      figuras: [
-        { ordem: 1, secao: "Métodos", principal: true, titulo: "Fluxo PRISMA", legenda: "Seleção de estudos.", url: figLarga },
-        { ordem: 2, secao: "Resultados", titulo: "Eventos por sistema", legenda: "Distribuição de eventos psiquiátricos relatados.", url: figDensa },
-      ],
-    };
-    const CASO_B = {
-      id: "B-202", area: "Endocrinologia", fase: 5, desenho: "Estudo transversal",
-      titulo: "Agonorexia associada ao uso prolongado de agonistas de GLP-1",
-      autores: ["Diego Reis", "Elisa Mota"], orientador: "Profa. Dra. P. Alves",
-      afiliacao: "Medicina UNIDAVI", palavras: ["GLP-1", "apetite", "transversal"],
-      intro: TXT + TXT, objetivos: TXT, metodos: TXT + TXT, resultados: TXT + TXT,
-      referencias: refs(7),
-      figuras: [
-        { ordem: 1, secao: "Resultados", principal: true, titulo: "Curva de apetite", legenda: "Variação relatada ao longo de 12 semanas.", url: figLarga },
-        { ordem: 2, secao: "Introdução", titulo: "Mecanismo", legenda: "Esquema receptor.", url: figLarga },
-      ],
-    };
-
-    // Caso C — texto CURTO, como o pôster real (Intro 1 parág., Obj 1 linha,
-    // Metodologia ~2 linhas, Resultados ~1 parág.), Fig1 no topo + Fig2 alta/densa.
-    const CASO_C = {
-      id: "C-303", area: "Psiquiatria", fase: 7, desenho: "Revisão sistemática",
-      titulo: "Efeitos psiquiátricos dos análogos de GLP-1 em adultos: uma revisão sistemática",
-      autores: ["Sofia Venturi", "José E. L. D'Agostini", "Alinne Petris"], orientador: "NPCMed",
-      afiliacao: "Medicina UNIDAVI", palavras: ["Análogos de GLP-1", "Efeitos psiquiátricos"],
-      intro: TXT,
-      objetivos: "Avaliar a relação entre o uso de análogos de GLP-1 e os seus efeitos psiquiátricos em adultos.",
-      metodos: "O presente estudo caracteriza-se por uma revisão sistemática conduzida conforme as diretrizes PRISMA, com busca abrangente em bases nacionais e internacionais, sem restrição de idioma.",
-      resultados: TXT,
-      referencias: refs(23),
-      figuras: [
-        { ordem: 1, secao: "Introdução", principal: true, titulo: "", legenda: "Regulação hormonal da glicose pelas incretinas. Fonte: UptoDate.", url: figLarga },
-        { ordem: 2, secao: "Resultados", titulo: "", legenda: "Mecanismos centrais dos análogos do GLP-1 e seus efeitos na saúde mental.", url: figDensa },
-      ],
-    };
-
-    // Caso D — ESTRESSE: muito texto + figuras + 23 refs, para forçar o
-    // "estourou" (cabe SEM refs, transborda COM refs) — gatilho do loop F7-8448.
-    const CASO_D = {
-      id: "D-404", area: "Cardiologia", fase: 7, desenho: "Revisão sistemática",
-      titulo: "Preditores de reinternação por insuficiência cardíaca e mortalidade em adultos: uma revisão sistemática",
-      autores: ["A. Lima", "B. Costa", "C. Reis", "D. Souza"], orientador: "NPCMed",
-      afiliacao: "Medicina UNIDAVI", palavras: ["IC", "reinternação", "mortalidade"],
-      intro: TXT + TXT + TXT + TXT + TXT, objetivos: TXT + TXT + TXT, metodos: TXT + TXT + TXT + TXT + TXT,
-      resultados: TXT + TXT + TXT + TXT + TXT + TXT,
-      referencias: refs(23),
-      figuras: [
-        { ordem: 1, secao: "Métodos", principal: true, titulo: "", legenda: "Fluxograma PRISMA 2020 de seleção dos estudos.", url: figLarga },
-        { ordem: 2, secao: "Resultados", titulo: "", legenda: "Preditores agrupados por sistema.", url: figDensa },
-      ],
-    };
-
-    const CASO_E = {
-      id: "F7-8448", area: "Endocrinologia", fase: 7, desenho: "Relato de caso",
-      titulo: "Diabetes atípico de início precoce (MODY): um relato de caso",
-      autores: ["M. Aluno", "Orientador X"], orientador: "NPCMed",
-      afiliacao: "Medicina UNIDAVI", palavras: ["MODY", "diabetes", "relato de caso"],
-      intro: TXT + TXT,
-      objetivos: "Descrever a investigação diagnóstica de um caso de diabetes MODY e propor um protocolo de rastreio familiar.",
-      metodos: TXT,
-      resultados: TXT + TXT,
-      conclusao: "",
-      referencias: refs(9),
-      figuras: [
-        { ordem: 1, secao: "Métodos", principal: true, titulo: "", legenda: "Heredograma da família investigada.", url: figLarga },
-      ],
-    };
-
-    function App(){
-      const [caso, setCaso] = useState("A");
-      const [aj, setAj] = useState("");   // ajuste_layout string
-      const base = caso === "A" ? CASO_A : caso === "C" ? CASO_C : caso === "D" ? CASO_D : caso === "E" ? CASO_E : CASO_B;
-      const t = { ...base, ajuste_layout: aj };
-      // aplica ajuste à figura ALVO (idx) pela API real (SAM_AJUSTE.montar)
-      const aplicar = (idx, patch, cols) => {
-        if (!patch){ setAj(cols===3 ? '{"v":3,"colunas":3}' : ""); return; }
-        const figs = base.figuras.map((f,i)=> i===idx ? {...f, ...patch} : {...f});
-        const s = window.SAM_AJUSTE ? window.SAM_AJUSTE.montar(figs, cols||2, base.desenho) : "";
-        setAj(s);
-      };
-      React.useEffect(()=>{
-        const bar = document.getElementById("bar");
-        bar.innerHTML = "";
-        const mk = (label,on,fn)=>{ const b=document.createElement("button"); b.textContent=label; if(on)b.className="on"; b.onclick=fn; bar.appendChild(b); };
-        const sep = ()=>{ const s=document.createElement("span"); s.style.cssText="width:1px;background:rgba(255,255,255,.25);margin:0 4px;"; bar.appendChild(s); };
-        mk("Caso A · densa", caso==="A", ()=>{setCaso("A");setAj("");});
-        mk("Caso B · larga", caso==="B", ()=>{setCaso("B");setAj("");});
-        mk("Caso C · curto", caso==="C", ()=>{setCaso("C");setAj("");});
-        mk("Caso D · estresse", caso==="D", ()=>{setCaso("D");setAj("");});
-        mk("Caso E · relato7", caso==="E", ()=>{setCaso("E");setAj("");});
-        sep();
-        mk("Auto", aj==="", ()=>setAj(""));
-        // ajustes de TAMANHO na figura principal (idx 0)
-        mk("Princ. M", aj.indexOf('"tamanho":"M"')>=0, ()=>aplicar(0,{tamanho:"M",lado:"direita"}));
-        mk("Princ. C", aj.indexOf('"tamanho":"C"')>=0, ()=>aplicar(0,{tamanho:"C"}));
-        sep();
-        // CORREÇÃO 3 — "Livre" na figura de seção (idx 1)
-        mk("Fig2 Livre", aj.indexOf('"secao":"__livre__"')>=0 && aj.indexOf('"tamanho"')<0, ()=>aplicar(1,{secaoOverride:"__livre__"}));
-        mk("Fig2 Livre+G", aj.indexOf('"secao":"__livre__"')>=0 && aj.indexOf('"tamanho":"G"')>=0, ()=>aplicar(1,{secaoOverride:"__livre__",tamanho:"G"}));
-        mk("Livre+G · 3col", aj.indexOf('"secao":"__livre__"')>=0 && aj.indexOf('"colunas":3')>=0, ()=>aplicar(1,{secaoOverride:"__livre__",tamanho:"G"},3));
-      });
-      return <PosterCompletoLandscape key={caso+":"+aj} t={t} />;
-    }
-    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-  })();
-  </script>
+  <!-- Ver na TV: overlay fullscreen com iframe (item 4) — script clássico -->
+  <script src="previa.js"></script>
+  <script type="text/babel" src="curadoria-app.jsx"></script>
 </body>
 </html>
