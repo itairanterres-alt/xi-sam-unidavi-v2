@@ -692,14 +692,21 @@ function FigFloat({ f, cor, lado, modo, figKey, aj }) {
   const ajLado = aj && aj.lado ? (aj.lado === "esquerda" ? "left" : "right") : null;
   const xg = !!(aj && aj.tamanho === "XG");
   const central = !!(aj && aj.tamanho === "C"); /* CENTRAL: 70%, centralizado, sem float, texto acima e abaixo */
+  const livre = !!(aj && aj.secao === "__livre__"); /* LIVRE: solta da seção → bloco próprio sem título (mesmo caminho de C/XG, sem teto por fit.altura) */
   const ajW = aj && AJ_W[aj.tamanho] != null ? AJ_W[aj.tamanho] : null;
-  const fixo = xg || central || ajW != null;
-  const blocoEff = bloco || xg || central;
+  /* "Livre" SEM tamanho explícito recebe uma largura FIXA padrão (como C/XG e
+     P/M/G). Largura fixa = estável: o bloco não muda de largura conforme o
+     aspecto da imagem é medido, evitando a realimentação medir→remedir que
+     trava o balanceador (Maximum update depth) em pôsteres de texto curto. */
+  const livreW = (livre && ajW == null && !xg && !central) ? 55 : null;
+  const fixo = xg || central || ajW != null || livreW != null;
+  const blocoEff = bloco || xg || central || livre;
   const ladoEff = ajLado || lado;
   let wPct;
   if (xg) wPct = 100;
   else if (central) wPct = 70;
   else if (ajW != null) wPct = ajW;
+  else if (livreW != null) wPct = livreW;
   else { const base = blocoEff ? (muitoAlta ? 38 : vertical ? 52 : 74) : (muitoAlta ? 30 : vertical ? 40 : 54); wPct = Math.max(24, base - (blocoEff ? 0 : shrink * 9)); }
   const css = blocoEff
     ? { clear: "both", width: `${wPct}%`, margin: `${m}px auto` }
@@ -753,7 +760,7 @@ function CorpoRevista({ secoes, refsBloco, refsBanda, bw = 1520, gap = 36, padX 
   /* XG = figura de LARGURA CHEIA: vira BLOCO PRÓPRIO no empacotador, para o
      título+texto da seção poderem ir para outra coluna (preenchendo o vazio e
      autoajustando a fonte) em vez de serem espremidos/suprimidos pela figura. */
-  const _ehXGouC = (f) => { const a = ajustes && ajustes.figuras ? ajustes.figuras[f.__ajKey] : null; return !!(a && (a.tamanho === "XG" || a.tamanho === "C")); };
+  const _ehXGouC = (f) => { const a = ajustes && ajustes.figuras ? ajustes.figuras[f.__ajKey] : null; return !!(a && (a.tamanho === "XG" || a.tamanho === "C" || a.secao === "__livre__")); };
   const secoesXG = [], _xgBlocks = [];
   (secoes || []).forEach((sx) => {
     if (sx.node) { secoesXG.push(sx); return; }
@@ -960,7 +967,7 @@ function PosterCompletoLandscape({ t, onVoltar }) {
           /* aplica override de SEÇÃO por figura (ajuste manual da curadoria): a
              chave (__ajKey) continua ancorada na seção ORIGINAL da submissão
              (estável), mas a figura é re-bucketada na seção escolhida. */
-          const _tEff = { ...t, figuras: figsOrdenadas(t).map((f) => { const o = (aj && aj.figuras) ? aj.figuras[_ajK[f.ordem]] : null; return { ...f, secao: (o && o.secao) ? o.secao : f.secao, __ajKey: _ajK[f.ordem] }; }) };
+          const _tEff = { ...t, figuras: figsOrdenadas(t).map((f) => { const o = (aj && aj.figuras) ? aj.figuras[_ajK[f.ordem]] : null; return { ...f, secao: (o && o.secao && o.secao !== "__livre__") ? o.secao : f.secao, __ajKey: _ajK[f.ordem] }; }) };
           const { secoes: SR, outras: SRoutras } = secoesRender(_tEff);
           const secoes = [];
           SR.forEach((s) => { if (s.texto || (s.figs && s.figs.length)) secoes.push({ key: "s-" + s.campo, titulo: s.rotulo, texto: s.texto, figs: s.figs, cor }); });

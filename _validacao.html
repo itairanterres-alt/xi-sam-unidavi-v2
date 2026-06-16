@@ -67,8 +67,8 @@
       resultados: TXT + TXT + TXT,
       referencias: refs(9),
       figuras: [
-        { ordem: 1, secao: "Resultados", principal: true, titulo: "Eventos por sistema", legenda: "Distribuição de eventos psiquiátricos relatados.", url: figDensa },
-        { ordem: 2, secao: "Métodos", titulo: "Fluxo PRISMA", legenda: "Seleção de estudos.", url: figLarga },
+        { ordem: 1, secao: "Métodos", principal: true, titulo: "Fluxo PRISMA", legenda: "Seleção de estudos.", url: figLarga },
+        { ordem: 2, secao: "Resultados", titulo: "Eventos por sistema", legenda: "Distribuição de eventos psiquiátricos relatados.", url: figDensa },
       ],
     };
     const CASO_B = {
@@ -84,26 +84,54 @@
       ],
     };
 
+    // Caso C — texto CURTO, como o pôster real (Intro 1 parág., Obj 1 linha,
+    // Metodologia ~2 linhas, Resultados ~1 parág.), Fig1 no topo + Fig2 alta/densa.
+    const CASO_C = {
+      id: "C-303", area: "Psiquiatria", fase: 7, desenho: "Revisão sistemática",
+      titulo: "Efeitos psiquiátricos dos análogos de GLP-1 em adultos: uma revisão sistemática",
+      autores: ["Sofia Venturi", "José E. L. D'Agostini", "Alinne Petris"], orientador: "NPCMed",
+      afiliacao: "Medicina UNIDAVI", palavras: ["Análogos de GLP-1", "Efeitos psiquiátricos"],
+      intro: TXT,
+      objetivos: "Avaliar a relação entre o uso de análogos de GLP-1 e os seus efeitos psiquiátricos em adultos.",
+      metodos: "O presente estudo caracteriza-se por uma revisão sistemática conduzida conforme as diretrizes PRISMA, com busca abrangente em bases nacionais e internacionais, sem restrição de idioma.",
+      resultados: TXT,
+      referencias: refs(23),
+      figuras: [
+        { ordem: 1, secao: "Introdução", principal: true, titulo: "", legenda: "Regulação hormonal da glicose pelas incretinas. Fonte: UptoDate.", url: figLarga },
+        { ordem: 2, secao: "Resultados", titulo: "", legenda: "Mecanismos centrais dos análogos do GLP-1 e seus efeitos na saúde mental.", url: figDensa },
+      ],
+    };
+
     function App(){
       const [caso, setCaso] = useState("A");
       const [aj, setAj] = useState("");   // ajuste_layout string
-      const base = caso === "A" ? CASO_A : CASO_B;
+      const base = caso === "A" ? CASO_A : caso === "C" ? CASO_C : CASO_B;
       const t = { ...base, ajuste_layout: aj };
-      // monta string de ajuste pela API real (SAM_AJUSTE.montar)
-      const aplicar = (tamanho) => {
-        if (!tamanho){ setAj(""); return; }
-        const figs = base.figuras.map((f,i)=> i===0 ? {...f, tamanho, lado:"direita"} : {...f});
-        const s = window.SAM_AJUSTE ? window.SAM_AJUSTE.montar(figs, 2, base.desenho) : "";
+      // aplica ajuste à figura ALVO (idx) pela API real (SAM_AJUSTE.montar)
+      const aplicar = (idx, patch, cols) => {
+        if (!patch){ setAj(cols===3 ? '{"v":3,"colunas":3}' : ""); return; }
+        const figs = base.figuras.map((f,i)=> i===idx ? {...f, ...patch} : {...f});
+        const s = window.SAM_AJUSTE ? window.SAM_AJUSTE.montar(figs, cols||2, base.desenho) : "";
         setAj(s);
       };
       React.useEffect(()=>{
         const bar = document.getElementById("bar");
         bar.innerHTML = "";
         const mk = (label,on,fn)=>{ const b=document.createElement("button"); b.textContent=label; if(on)b.className="on"; b.onclick=fn; bar.appendChild(b); };
+        const sep = ()=>{ const s=document.createElement("span"); s.style.cssText="width:1px;background:rgba(255,255,255,.25);margin:0 4px;"; bar.appendChild(s); };
         mk("Caso A · densa", caso==="A", ()=>{setCaso("A");setAj("");});
         mk("Caso B · larga", caso==="B", ()=>{setCaso("B");setAj("");});
-        const sep=document.createElement("span"); sep.style.cssText="width:1px;background:rgba(255,255,255,.25);margin:0 4px;"; bar.appendChild(sep);
-        ["","M","G","C"].forEach(sz=> mk(sz||"Auto", aj.includes(sz?("="+sz):"")&&(sz?aj.indexOf("="+sz)>=0:aj===""), ()=>aplicar(sz)) );
+        mk("Caso C · curto", caso==="C", ()=>{setCaso("C");setAj("");});
+        sep();
+        mk("Auto", aj==="", ()=>setAj(""));
+        // ajustes de TAMANHO na figura principal (idx 0)
+        mk("Princ. M", aj.indexOf('"tamanho":"M"')>=0, ()=>aplicar(0,{tamanho:"M",lado:"direita"}));
+        mk("Princ. C", aj.indexOf('"tamanho":"C"')>=0, ()=>aplicar(0,{tamanho:"C"}));
+        sep();
+        // CORREÇÃO 3 — "Livre" na figura de seção (idx 1)
+        mk("Fig2 Livre", aj.indexOf('"secao":"__livre__"')>=0 && aj.indexOf('"tamanho"')<0, ()=>aplicar(1,{secaoOverride:"__livre__"}));
+        mk("Fig2 Livre+G", aj.indexOf('"secao":"__livre__"')>=0 && aj.indexOf('"tamanho":"G"')>=0, ()=>aplicar(1,{secaoOverride:"__livre__",tamanho:"G"}));
+        mk("Livre+G · 3col", aj.indexOf('"secao":"__livre__"')>=0 && aj.indexOf('"colunas":3')>=0, ()=>aplicar(1,{secaoOverride:"__livre__",tamanho:"G"},3));
       });
       return <PosterCompletoLandscape key={caso+":"+aj} t={t} />;
     }

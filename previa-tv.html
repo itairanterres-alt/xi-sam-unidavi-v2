@@ -238,6 +238,7 @@
                           onChange={(e)=>{ e.stopPropagation(); onSecao(idx, e.target.value); }}
                           style={{ border:"none", borderRadius:7, padding:"7px 8px", fontSize:12.5, fontWeight:700, cursor:"pointer", background: a.secao ? "#00ADEF" : "rgba(255,255,255,0.16)", color:"#fff", lineHeight:1.2, maxWidth:160, touchAction:"manipulation" }}>
                           <option value="" style={{ color:"#111" }}>Seção: automática</option>
+                          <option value="__livre__" style={{ color:"#111" }}>Seção: livre (solta)</option>
                           {secOpts.map((o) => <option key={o.sec} value={o.sec} style={{ color:"#111" }}>{o.rotulo}</option>)}
                         </select>
                       </>
