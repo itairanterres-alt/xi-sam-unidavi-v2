@@ -76,7 +76,7 @@
       const carregar = useCallback((t) => {
         const figs = normFigs(t);
         const aj = window.SAM_AJUSTE ? window.SAM_AJUSTE.ler(t.ajuste_layout) : null;
-        const chaves = window.SAM_AJUSTE ? window.SAM_AJUSTE.chavesDe(figs, t.desenho) : figs.map((_, i) => "f" + i);
+        const chaves = window.SAM_AJUSTE ? window.SAM_AJUSTE.chavesDe(figs, t.desenho, t.fase) : figs.map((_, i) => "f" + i);
         setBase({ ...t, figuras: figs });
         setColunas(aj && aj.colunas === 3 ? 3 : 2);
         setFigAj(figs.map((f, i) => { const o = (aj && aj.figuras && aj.figuras[chaves[i]]) || {}; return { tamanho: o.tamanho || "", lado: o.lado || "", secao: o.secao || "" }; }));
@@ -100,7 +100,7 @@
       // figuras com ajuste aplicado (na ordem original) → string do contrato
       const figs = base ? base.figuras : [];
       const figsComAj = figs.map((f, i) => ({ ...f, tamanho: figAj[i] && figAj[i].tamanho, lado: figAj[i] && figAj[i].lado, secaoOverride: figAj[i] && figAj[i].secao }));
-      const ajusteStr = (base && window.SAM_AJUSTE) ? window.SAM_AJUSTE.montar(figsComAj, colunas, base.desenho) : "";
+      const ajusteStr = (base && window.SAM_AJUSTE) ? window.SAM_AJUSTE.montar(figsComAj, colunas, base.desenho, base.fase) : "";
       const trabalhoLive = base ? { ...base, ajuste_layout: ajusteStr } : null;
 
       // avisa a mãe a cada mudança (para Salvar / refletir colunas / habilitar reset)
@@ -197,6 +197,10 @@
             const a = figAj[idx] || {}; const ativo = hover === r.ordem || sel === r.ordem || (drag && drag.ordem === r.ordem);
             const xg = a.tamanho === "XG";
             const acima = (r.y + r.h + 46) > window.innerHeight; // barra abaixo, salvo perto do rodapé
+            // ancora a barra no lado mais próximo do centro: figura na metade
+            // DIREITA da tela → barra ancorada à direita (cresce p/ a esquerda),
+            // evitando que os últimos botões saiam da tela.
+            const ancDir = (r.x + r.w / 2) > window.innerWidth / 2;
             return (
               <div key={r.ordem}
                 onMouseEnter={() => showHover(r.ordem)} onMouseLeave={hideHover}
@@ -221,7 +225,7 @@
                 {/* mini-barra: tamanho + lado + auto (só no hover; fora da figura) */}
                 {ativo && (
                   <div onMouseEnter={() => showHover(r.ordem)} onMouseLeave={hideHover} onPointerDown={(e)=>e.stopPropagation()} onClick={(e)=>e.stopPropagation()}
-                    style={{ position:"absolute", left:0, [acima?"bottom":"top"]: "calc(100% + 8px)", display:"flex", gap:6, alignItems:"center", background:"rgba(1,40,90,0.96)", padding:"6px 9px", borderRadius:10, boxShadow:"0 6px 22px rgba(0,0,0,0.4)", whiteSpace:"nowrap" }}>
+                    style={{ position:"absolute", [ancDir?"right":"left"]:0, [acima?"bottom":"top"]: "calc(100% + 8px)", display:"flex", flexWrap:"wrap", width:"max-content", gap:6, alignItems:"center", justifyContent: ancDir ? "flex-end" : "flex-start", maxWidth:"min(94vw, 600px)", background:"rgba(1,40,90,0.96)", padding:"6px 9px", borderRadius:10, boxShadow:"0 6px 22px rgba(0,0,0,0.4)" }}>
                     {["P","M","G","C","XG"].map((v) => <Seg key={v} active={a.tamanho===v} onClick={()=>onSize(idx, a.tamanho===v?"":v)} title={v==="C"?"Central (70%, centralizado, texto ao redor)":v==="XG"?"Faixa cheia":SIZE_LABEL[v]}>{v}</Seg>)}
                     <span style={{ width:1, height:16, background:"rgba(255,255,255,0.25)", margin:"0 2px" }} />
                     <Seg active={a.lado==="esquerda"} onClick={()=>onSide(idx, a.lado==="esquerda"?"":"esquerda")} title="Esquerda">◀</Seg>

@@ -11,16 +11,20 @@
    ordem em que o aluno as listou. Depende de window.SAM_ESQUEMA.
    ============================================================ */
 (function () {
-  function _secMap(desenho) {
+  function _secMap(desenho, fase) {
     const m = {};
     if (window.SAM_ESQUEMA && typeof window.SAM_ESQUEMA.secoesDe === "function") {
-      window.SAM_ESQUEMA.secoesDe({ desenho }).forEach((s) => { if (s.sec) m[s.sec] = s.rotulo; });
+      window.SAM_ESQUEMA.secoesDe({ desenho, fase }).forEach((s) => { if (s.sec) m[s.sec] = s.rotulo; });
     }
     return m;
   }
-  /* chave de contrato de cada figura, na mesma ordem da lista recebida */
-  function chavesDe(figs, desenho) {
-    const secMap = _secMap(desenho);
+  /* chave de contrato de cada figura, na mesma ordem da lista recebida.
+     A FASE entra no mapa de rótulos porque a 7ª fase (projeto) usa rótulos
+     diferentes do relato concluído — sem isto a chave GRAVADA pelo editor
+     diverge da chave LIDA pelo renderizador (que usa secoesDe(t) com fase)
+     e o ajuste "acende mas não opera". */
+  function chavesDe(figs, desenho, fase) {
+    const secMap = _secMap(desenho, fase);
     const counts = {};
     return (figs || []).map((fg) => {
       const b = fg.secao || "Outra";
@@ -32,8 +36,8 @@
      opcionais por figura) e do número de colunas. Retorna "" quando não
      há nada a salvar (colunas padrão 2 e nenhuma figura ajustada) =>
      ausência => o renderizador usa a heurística automática (DOC 4). */
-  function montar(figs, colunas, desenho) {
-    const chaves = chavesDe(figs, desenho);
+  function montar(figs, colunas, desenho, fase) {
+    const chaves = chavesDe(figs, desenho, fase);
     const figuras = {};
     (figs || []).forEach((fg, i) => {
       if (fg && (fg.tamanho || fg.lado || fg.secaoOverride)) {
@@ -57,9 +61,9 @@
   }
   /* devolve uma NOVA lista de figs com tamanho/lado preenchidos a partir
      de um ajuste lido (round-trip nos controles). */
-  function aplicar(figs, desenho, aj) {
+  function aplicar(figs, desenho, aj, fase) {
     if (!aj || !aj.figuras) return figs || [];
-    const chaves = chavesDe(figs, desenho);
+    const chaves = chavesDe(figs, desenho, fase);
     return (figs || []).map((fg, i) => {
       const o = aj.figuras[chaves[i]];
       return o ? { ...fg, tamanho: o.tamanho || fg.tamanho, lado: o.lado || fg.lado, secaoOverride: o.secao || fg.secaoOverride } : fg;
