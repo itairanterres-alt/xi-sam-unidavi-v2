@@ -146,7 +146,7 @@ function useFit(BW, BH) {
    Busca UMA vez por carregamento de página; cache compartilhado.
    TRABALHOS (data.js) é fallback APENAS em desenvolvimento local.
    ============================================================ */
-const SAM_API_URL = "https://script.google.com/macros/s/AKfycbwDbJFn3dz7fH8fXIqLPsLiom43aMACkYz-ZPUie5W14c57elu4FRBqCvrPhzwcFSBX/exec";
+const SAM_API_URL = "https://script.google.com/macros/s/AKfycbw8GrSUw3Ck8Pt4qolDD44xy_4Y0vXv9KaUfEUZKFUk7qKUWyE8kJRpTqSX9AtdNRCrOg/exec";
 const SAM_DEV = /^(localhost|127\.|0\.0\.0\.0)/.test(window.location.hostname) || window.location.protocol === "file:";
 
 const _samStore = {
