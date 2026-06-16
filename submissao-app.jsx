@@ -10,7 +10,7 @@
 const { useState, useRef, useLayoutEffect, useEffect, useMemo } = React;
 
 // URL do "App da Web" do Apps Script (implantação ativa):
-const API_URL = "https://script.google.com/macros/s/AKfycbwDbJFn3dz7fH8fXIqLPsLiom43aMACkYz-ZPUie5W14c57elu4FRBqCvrPhzwcFSBX/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbw8GrSUw3Ck8Pt4qolDD44xy_4Y0vXv9KaUfEUZKFUk7qKUWyE8kJRpTqSX9AtdNRCrOg/exec";
 
 const C = {
   azul:"#023E88", azulEsc:"#01285A", ciano:"#00ADEF", cianoClaro:"#E5F6FE",
