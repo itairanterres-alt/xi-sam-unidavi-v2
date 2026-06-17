@@ -1,4 +1,4 @@
-/* ============================================================
+/* ==================================/* ============================================================
    XI SAM 2026 — TELAS: Home, PaginaTrabalho, Telao
    ============================================================ */
 
@@ -184,12 +184,12 @@ function Home() {
           </div>
         )}
 
-        {/* ===================== BLOCO 1 — JARDIM DE INVERNO ===================== */}
+        {/* ===================== BLOCO 1 — HALL DE ENTRADA ===================== */}
         <div style={{ display:"flex", alignItems:"center", gap:12, marginTop:6, marginBottom:12, padding:"4px 0" }}>
           <div style={{ width:44, height:44, borderRadius:12, background:`${C.ciano}1A`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><MapPin size={22} color={C.azul} /></div>
           <div style={{ flex:1, minWidth:0 }}>
             <div style={{ fontSize:11, letterSpacing:1.5, fontWeight:700, color:C.ciano }}>AMBIENTE 1</div>
-            <div style={{ fontSize:17, fontWeight:800, color:C.tinta, lineHeight:1.15 }}>Jardim de Inverno</div>
+            <div style={{ fontSize:17, fontWeight:800, color:C.tinta, lineHeight:1.15 }}>Hall de entrada do Auditório Célio Simão Martignago</div>
           </div>
         </div>
 
@@ -500,7 +500,7 @@ function Sobre() {
           </div>
           <div style={{ ...linha, marginBottom:10 }}>
             <Users size={20} color={C.ciano} style={{ flexShrink:0, marginTop:1 }} />
-            <span>Pôsteres e Science with Coffee: Jardim de Inverno</span>
+            <span>Pôsteres e Science with Coffee: Hall de entrada do Auditório Célio Simão Martignago</span>
           </div>
           <div style={linha}>
             <Mic size={20} color={C.ciano} style={{ flexShrink:0, marginTop:1 }} />
