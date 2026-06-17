@@ -131,7 +131,6 @@
       referencias: refs(9),
       figuras: [
         { ordem: 1, secao: "Métodos", principal: true, titulo: "", legenda: "Heredograma da família investigada.", url: figLarga },
-        { ordem: 2, secao: "Resultados", titulo: "", legenda: "Perfil glicêmico ao longo do acompanhamento.", url: figDensa },
       ],
     };
 
@@ -144,7 +143,7 @@
       const aplicar = (idx, patch, cols) => {
         if (!patch){ setAj(cols===3 ? '{"v":3,"colunas":3}' : ""); return; }
         const figs = base.figuras.map((f,i)=> i===idx ? {...f, ...patch} : {...f});
-        const s = window.SAM_AJUSTE ? window.SAM_AJUSTE.montar(figs, cols||2, base.desenho, base.fase) : "";
+        const s = window.SAM_AJUSTE ? window.SAM_AJUSTE.montar(figs, cols||2, base.desenho) : "";
         setAj(s);
       };
       React.useEffect(()=>{

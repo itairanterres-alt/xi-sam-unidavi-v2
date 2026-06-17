@@ -24,12 +24,24 @@
 <body>
   <div id="root"></div>
 
-  <!-- conjunto canônico do telão: data + esquema + contrato + lib + componentes -->
-  <script src="data.js"></script>
-  <script src="esquema.js"></script>
-  <script src="ajuste.js"></script>
-  <script type="text/babel" src="lib.jsx"></script>
-  <script type="text/babel" src="posters.jsx"></script>
+  <!-- conjunto canônico do telão: data + esquema + contrato + lib + componentes.
+       CACHE-BUSTING: o telão é um navegador-quiosque raramente recarregado; sem
+       isto ele segue servindo versões ANTIGAS destes scripts mesmo após um deploy
+       novo (barra "acende mas não muda", edição não opera). previa.js abre este
+       HTML com ?ts=<agora>; reaproveitamos esse token (fallback Date.now()) para
+       versionar cada import, garantindo que cada "Ver na TV" use o código atual. -->
+  <script>
+  (function () {
+    var m = location.search.match(/[?&]ts=([^&]+)/);
+    var v = m ? m[1] : Date.now();
+    ["data.js", "esquema.js", "ajuste.js"].forEach(function (s) {
+      document.write('<script src="' + s + '?v=' + v + '"><\/script>');
+    });
+    ["lib.jsx", "posters.jsx"].forEach(function (s) {
+      document.write('<script type="text/babel" src="' + s + '?v=' + v + '"><\/script>');
+    });
+  })();
+  </script>
 
   <script type="text/babel" data-presets="react">
   (function () {

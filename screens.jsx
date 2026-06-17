@@ -52,7 +52,20 @@ function Home() {
   // em modo painel, destaca o dia atual primeiro (se o evento estiver acontecendo)
   const [dia, setDia] = useState(() => (painel && _samDiaDeHoje()) || DIAS[0]);
   const [filtro, setFiltro] = useState("Todos");
+  const [busca, setBusca] = useState("");
   const { trabalhos, status, recarregar } = useTrabalhos();
+  const buscaNorm = normalizaNome(busca);
+  const resultados = useMemo(() => {
+    if (!buscaNorm) return [];
+    const bate = (it) => [it.ap, it.titulo, it.area].some((v) => normalizaNome(v).includes(buscaNorm));
+    const out = [];
+    DIAS.forEach((dd) => {
+      const pg = PROGRAMA[dd];
+      pg.orais.forEach((o) => { if (bate(o)) out.push({ tipo:"oral", dia:dd, it:o }); });
+      pg.posteres.forEach((p) => { if (bate(p)) out.push({ tipo:"poster", dia:dd, it:p }); });
+    });
+    return out;
+  }, [buscaNorm]);
   // modo painel: cicla os dias sozinho (~20s), sem necessidade de toque
   useEffect(() => {
     if (!painel) return;
@@ -97,6 +110,60 @@ function Home() {
           <CalendarDays size={18} color={C.azul} /><h2 style={{ fontSize:18, fontWeight:800, color:C.tinta, margin:0 }}>Programação</h2>
         </div>
         <StatusTrabalhos status={status} recarregar={recarregar} />
+
+        {/* Busca — filtra orais + pôsteres de todos os dias por autor, título ou área */}
+        <div style={{ position:"relative", marginBottom:16 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.cinza} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar trabalho, autor ou área…" aria-label="Buscar trabalho, autor ou área"
+            style={{ width:"100%", padding:"13px 42px 13px 42px", border:"1px solid #E3EAF2", borderRadius:11, fontSize:14.5, color:C.tinta, background:"#fff", boxSizing:"border-box" }} />
+          {busca && (
+            <button onClick={() => setBusca("")} aria-label="Limpar busca" style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", width:30, height:30, border:"none", background:"transparent", color:C.cinza, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", borderRadius:8 }}><X size={16} /></button>
+          )}
+        </div>
+
+        {/* Resultados da busca (substituem o programa enquanto há texto) */}
+        {busca.trim() !== "" && (
+          <div style={{ marginBottom:40 }}>
+            <div style={{ fontSize:13, color:C.cinza, marginBottom:14 }}>
+              {resultados.length === 0
+                ? <>Nenhum trabalho encontrado para “{busca.trim()}”.</>
+                : `${resultados.length} ${resultados.length === 1 ? "trabalho encontrado" : "trabalhos encontrados"}`}
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              {resultados.map((r, i) => {
+                const it = r.it;
+                const cor = AREA_COR[it.area] || C.cinza;
+                const t = casarTrabalho(it, trabalhos);
+                const card = { background:"#fff", border:"1px solid #E3EAF2", borderRadius:12, padding:16, display:"flex", gap:12, alignItems:"center", borderLeft:`4px solid ${cor}`, textAlign:"left", width:"100%" };
+                const corpo = (
+                  <>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6, flexWrap:"wrap" }}>
+                        <span style={{ ...chip(true, cor), padding:"3px 10px", fontSize:11 }}>{it.area}</span>
+                        <span style={{ fontSize:11, fontWeight:700, color:C.cinza }}>{r.dia} · {r.tipo === "oral" ? it.hora : "Pôster " + it.n}</span>
+                      </div>
+                      <div style={{ fontSize:14.5, fontWeight:700, color:C.tinta, lineHeight:1.3, marginBottom:4 }}>{it.titulo}</div>
+                      <div style={{ display:"flex", alignItems:"center", gap:9, marginTop:7 }}>
+                        <AvatarAutor url={t ? (t.foto_autores_url || t.foto_autores_dataUrl) : null} size={32} />
+                        <span style={{ fontSize:12.5, color:C.cinza, flex:1, minWidth:0 }}>{it.ap}</span>
+                        {t ? <SeloVer t={t} /> : <span style={{ fontSize:11.5, color:"#9AA8B8", whiteSpace:"nowrap" }}>em breve</span>}
+                      </div>
+                    </div>
+                    {t && <ChevronRight size={18} color={C.ciano} style={{ alignSelf:"center", flexShrink:0 }} />}
+                  </>
+                );
+                return t ? (
+                  <button key={r.tipo + r.dia + i} className="card-link" onClick={() => go("#/trabalho/" + t.id)} style={card}>{corpo}</button>
+                ) : (
+                  <div key={r.tipo + r.dia + i} style={card}>{corpo}</div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {busca.trim() === "" && (
+        <>
         <div style={{ display:"flex", gap:6, marginBottom:14, flexWrap:"wrap", alignItems:"center" }}>
           {DIAS.map((dd) => (
             <button key={dd} onClick={() => { setDia(dd); setFiltro("Todos"); }} style={{ border:"none", borderRadius:999, padding:"11px 16px", fontSize:13, fontWeight:600, cursor:"pointer", background:dd===dia?C.azul:"#fff", color:dd===dia?"#fff":C.cinza, boxShadow:dd===dia?"none":"inset 0 0 0 1px #E3EAF2" }}>{dd}</button>
@@ -135,32 +202,29 @@ function Home() {
         <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
           <Users size={15} color={C.cinza} /><div style={{ fontWeight:700, color:C.cinza, fontSize:13 }}>Pôsteres expostos</div>
         </div>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px, 1fr))", gap:10, marginBottom:30 }}>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(260px, 1fr))", gap:10, marginBottom:30 }}>
           {d.posteres.map((p) => {
+            const cor = AREA_COR[p.area] || C.cinza;
             const t = casarTrabalho(p, trabalhos);
-            const base = { background:"#fff", border:"1px solid #E3EAF2", borderRadius:10, padding:"12px 14px", display:"flex", gap:12, alignItems:"center", textAlign:"left", width:"100%" };
-            const badge = (
-              <div style={{ width:28, height:28, borderRadius:7, background:`${C.ciano}1A`, color:C.azul, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, fontSize:11, flexShrink:0 }}>P{p.n}</div>
-            );
-            if (!t) return (
-              <div key={p.n} style={base}>
-                <AvatarAutor url={null} size={34} />
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:13, fontWeight:600, color:C.tinta, lineHeight:1.3 }}>{p.ap}</div>
-                  <div style={{ fontSize:11.5, color:"#9AA8B8", marginTop:3 }}>em breve</div>
+            const card = { background:"#fff", border:"1px solid #E3EAF2", borderRadius:12, padding:16, borderLeft:`4px solid ${cor}`, display:"flex", flexDirection:"column", gap:6, textAlign:"left", width:"100%" };
+            const corpo = (
+              <>
+                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                  <div style={{ width:26, height:26, borderRadius:7, background:`${C.ciano}1A`, color:C.azul, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, fontSize:11, flexShrink:0 }}>P{p.n}</div>
+                  <span style={{ ...chip(true, cor), padding:"3px 10px", fontSize:11 }}>{p.area}</span>
                 </div>
-                {badge}
-              </div>
-            );
-            return (
-              <button key={p.n} className="card-link fade-troca" onClick={() => go("#/trabalho/" + t.id)} style={base}>
-                <AvatarAutor url={t.foto_autores_url || t.foto_autores_dataUrl} size={34} />
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:13, fontWeight:600, color:C.tinta, lineHeight:1.3 }}>{p.ap}</div>
-                  <div style={{ marginTop:3 }}><SeloVer t={t} /></div>
+                <div style={{ fontSize:13.5, fontWeight:700, color:C.tinta, lineHeight:1.3 }}>{p.titulo}</div>
+                <div style={{ display:"flex", alignItems:"center", gap:9, marginTop:4 }}>
+                  <AvatarAutor url={t ? (t.foto_autores_url || t.foto_autores_dataUrl) : null} size={32} />
+                  <span style={{ fontSize:12.5, color:C.cinza, flex:1, minWidth:0 }}>{p.ap}</span>
+                  {t ? <SeloVer t={t} /> : <span style={{ fontSize:11.5, color:"#9AA8B8", whiteSpace:"nowrap" }}>em breve</span>}
                 </div>
-                {badge}
-              </button>
+              </>
+            );
+            return t ? (
+              <button key={p.n} className="card-link fade-troca" onClick={() => go("#/trabalho/" + t.id)} style={card}>{corpo}</button>
+            ) : (
+              <div key={p.n} style={card}>{corpo}</div>
             );
           })}
         </div>
@@ -219,6 +283,8 @@ function Home() {
             );
           })}
         </div>
+        </>
+        )}
         {/* O acesso aos trabalhos é exclusivamente pelo cronograma:
             card casado abre o resumo/pôster. (Galeria pública removida
             por decisão de produto; EstadoVazio segue em uso no Telão.) */}
