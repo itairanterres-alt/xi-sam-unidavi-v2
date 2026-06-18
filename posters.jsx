@@ -1023,6 +1023,53 @@ function RefsLeitura({ t, cor }) {
 const _matNavBtn = { display:"inline-flex", alignItems:"center", gap:6, border:"1px solid #E3EAF2", background:"#fff", color:C.azul, borderRadius:9, padding:"11px 16px", fontSize:13.5, fontWeight:700, cursor:"pointer", fontFamily:"inherit" };
 /* CSV padrão: vírgula separadora; campos com vírgula/quebra entre aspas duplas;
    "" representa uma aspa literal dentro de campo citado. Sem cabeçalho. */
+/* Player do podcast. Links de DOWNLOAD do Google Drive não fazem streaming
+   dentro de <audio> (sem suporte a Range), então para arquivos do Drive usamos
+   o player de PREVIEW oficial num iframe — que toca inline de forma confiável.
+   Sempre oferece um link de download como reserva. URLs não-Drive: <audio>. */
+function _driveId(url) {
+  const s = String(url || "");
+  const m = s.match(/[?&]id=([a-zA-Z0-9_-]+)/) || s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || s.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+function AudioMaterial({ src, cor }) {
+  const [falhou, setFalhou] = React.useState(false);
+  const id = _driveId(src);
+  const baixar = (
+    <a href={src} target="_blank" rel="noopener noreferrer"
+      style={{ alignSelf:"flex-start", display:"inline-flex", alignItems:"center", gap:6, fontSize:12.5, fontWeight:600, color:C.azul, textDecoration:"none" }}>
+      <Headphones size={13} color={C.azul} /> Abrir em nova aba / baixar
+    </a>
+  );
+  if (id) {
+    return (
+      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+        <div style={{ borderRadius:12, overflow:"hidden", border:"1px solid #E3EAF2", background:"#F2F5F9" }}>
+          <iframe src={`https://drive.google.com/file/d/${id}/preview`} title="Podcast" allow="autoplay"
+            style={{ width:"100%", height:80, border:"none", display:"block" }} />
+        </div>
+        {baixar}
+      </div>
+    );
+  }
+  if (falhou) {
+    return (
+      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+        <div style={{ fontSize:13, color:C.cinza, lineHeight:1.5 }}>Não foi possível tocar o áudio aqui. Abra o arquivo para ouvir ou baixar.</div>
+        <a href={src} target="_blank" rel="noopener noreferrer"
+          style={{ display:"inline-flex", alignItems:"center", gap:8, textDecoration:"none", background:cor || C.azul, color:"#fff", borderRadius:10, padding:"11px 16px", fontSize:13.5, fontWeight:700 }}>
+          <Headphones size={16} color="#fff" /> Abrir / baixar o podcast
+        </a>
+      </div>
+    );
+  }
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+      <audio controls src={src} style={{ width:"100%" }} onError={() => setFalhou(true)} />
+      {baixar}
+    </div>
+  );
+}
 function parseCSV(texto) {
   const linhas = []; let campo = "", linha = [], emAspas = false;
   const s = String(texto || "");
@@ -1163,7 +1210,7 @@ function MaterialSuplementar({ t }) {
         })}
       </div>
       <div style={{ padding:16 }}>
-        {abaEff === "audio" && <audio controls src={m.audioUrl} style={{ width:"100%" }} />}
+        {abaEff === "audio" && <AudioMaterial src={m.audioUrl} cor={cor} />}
         {abaEff === "quiz" && <Quiz questions={quiz} />}
         {abaEff === "flashcards" && <Flashcards cards={flashcards} />}
       </div>

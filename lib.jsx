@@ -267,7 +267,18 @@ function casarTrabalho(item, lista) {
     return tokens.every((tk) => aut.includes(tk));
   });
   if (porTokens.length === 1) return porTokens[0];
-  if (porTokens.length > 1) return null; // empate → não casa
+  if (porTokens.length > 1) {
+    // Empate: se TODOS os candidatos são o MESMO trabalho (mesmo título —
+    // submissão republicada/duplicada na planilha), não é ambiguidade real:
+    // usa o registro mais recente. Se os títulos diferem (homônimos de fato),
+    // mantém a recusa — não se chuta entre trabalhos distintos.
+    const titulos = new Set(porTokens.map((t) => normalizaNome(t.titulo || "")));
+    if (titulos.size === 1) {
+      return porTokens.slice().sort((a, b) =>
+        String(b.atualizado_em || "").localeCompare(String(a.atualizado_em || "")))[0];
+    }
+    return null; // empate real → não casa
+  }
   // 3) similaridade (Dice de bigramas) contra cada autor individual;
   //    casa só se EXATAMENTE UM trabalho atingir o limiar (≥ 0.82)
   const pontuados = lista.map((t) => {
