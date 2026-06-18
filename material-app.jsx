@@ -68,13 +68,64 @@ function readBase64(file) {
     r.readAsDataURL(file);
   });
 }
+/* ====== MODO DEMO (apenas para teste no preview) ======
+   Ativado por window.SAM_DEMO. Simula o backend do Apps Script: gera o login,
+   um trabalho fictício, interpreta o quiz colado e confirma o envio. NÃO afeta
+   a produção — com a flag desligada, todas as chamadas vão para a API_URL real. */
+function demoQuizParse(texto) {
+  // aceita o formato "colado do NotebookLM": blocos separados por --- ou linha em branco
+  const blocos = String(texto || "").split(/\n\s*(?:---+|\n)\s*\n?/).map((b) => b.trim()).filter(Boolean);
+  const questoes = [];
+  blocos.forEach((bloco) => {
+    const linhas = bloco.split(/\n/).map((l) => l.trim()).filter(Boolean);
+    let pergunta = "", correta = 0, explicacao = ""; const alternativas = [];
+    linhas.forEach((l) => {
+      let m;
+      if (m = l.match(/^(?:P|Pergunta|Q)\s*[:\.\)]\s*(.+)$/i)) pergunta = m[1].trim();
+      else if (m = l.match(/^([A-Da-d])\s*[\)\.\-]\s*(.+)$/)) alternativas.push(m[2].trim());
+      else if (m = l.match(/^(?:Correta|Resposta|Gabarito)\s*[:\.]\s*([A-Da-d])/i)) correta = m[1].toUpperCase().charCodeAt(0) - 65;
+      else if (m = l.match(/^(?:Explica[çc][ãa]o|Justificativa)\s*[:\.]\s*(.+)$/i)) explicacao = m[1].trim();
+      else if (!pergunta) pergunta = l.trim();
+    });
+    if (pergunta && alternativas.length >= 2) questoes.push({ pergunta, alternativas, correta: Math.max(0, Math.min(correta, alternativas.length - 1)), explicacao });
+  });
+  // fallback didático se nada foi reconhecido, para o teste sempre mostrar algo
+  if (!questoes.length) {
+    questoes.push(
+      { pergunta:"(demo) Qual exame é padrão-ouro para avaliar disfunção diastólica?", alternativas:["Ecocardiografia com Doppler","Radiografia de tórax","Eletrocardiograma de repouso","Hemograma"], correta:0, explicacao:"A ecocardiografia com Doppler avalia o relaxamento e enchimento ventricular." },
+      { pergunta:"(demo) O texto colado não seguiu o formato esperado — esta é uma questão de exemplo.", alternativas:["Entendi","Vou revisar o texto","Tanto faz","Não sei"], correta:1, explicacao:"No envio real, o backend (Gemini) estrutura o quiz a partir do texto do NotebookLM." }
+    );
+  }
+  return questoes;
+}
+async function demoBackend(payload) {
+  await new Promise((r) => setTimeout(r, 480)); // simula latência de rede
+  switch (payload && payload.tipo) {
+    case "material_trabalhos":
+      return { ok:true, trabalhos:[ { id:"DEMO-001", titulo:"Avaliação ecocardiográfica da disfunção diastólica induzida por quimioterapia", autor:"Marcel Felipe Alves", material:null } ] };
+    case "quiz_preview":
+      return { ok:true, questoes: demoQuizParse(payload.texto) };
+    case "material":
+      return { ok:true };
+    default:
+      return { ok:false, erro:"(demo) tipo não reconhecido: " + (payload && payload.tipo) };
+  }
+}
+
 /* POST JSON simples (text/plain evita preflight CORS) */
 async function postJSON(payload) {
+  if (window.SAM_DEMO) return demoBackend(payload);
   const r = await fetch(API_URL, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
   return r.json();
 }
 /* POST com progresso de upload (XHR; text/plain evita preflight CORS) */
 function postComProgresso(payload, onProgress) {
+  if (window.SAM_DEMO) {
+    return new Promise((resolve) => {
+      let p = 0;
+      const it = setInterval(() => { p += 0.18; if (onProgress) onProgress(Math.min(p, 1)); if (p >= 1) { clearInterval(it); setTimeout(() => resolve({ ok:true }), 250); } }, 160);
+    });
+  }
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", API_URL);
@@ -272,6 +323,14 @@ function MaterialApp() {
   const [declaracao, setDeclaracao] = useState(false);
   const [envio, setEnvio] = useState(null);        // null | {estado:"enviando",progresso} | {estado:"sucesso"} | {estado:"erro",msg}
 
+  /* modo demo: pula o login do Google e carrega um trabalho fictício */
+  useEffect(() => {
+    if (!window.SAM_DEMO) return;
+    const idToken = "demo-token";
+    setAuth({ idToken, email:"demo@unidavi.edu.br", nome:"Conta de teste" });
+    buscarTrabalhos(idToken);
+  }, []);
+
   /* busca os trabalhos do e-mail logado; keepId mantém a seleção após reenvio */
   const buscarTrabalhos = async (idToken, keepId) => {
     setFase("carregando"); setErroMsg("");
@@ -318,13 +377,13 @@ function MaterialApp() {
 
   const enviar = async () => {
     if (!podeEnviar) return;
-    setEnvio({ estado:"enviando", progresso:0 });
+    setEnvio({ estado:"enviando" });
     try {
       const payload = { tipo:"material", idToken: auth.idToken, id: sel.id, declaracao:true, podcast:null, quiz:null, flashcards:null };
       if (arq.podcast)    payload.podcast    = { nome: arq.podcast.name,    base64: await readBase64(arq.podcast) };
       if (temQuiz)        payload.quiz       = { questoes: quizQuestoes };
       if (arq.flashcards) payload.flashcards = { nome: arq.flashcards.name, base64: await readBase64(arq.flashcards) };
-      const res = await postComProgresso(payload, (p) => setEnvio({ estado:"enviando", progresso:p }));
+      const res = await postJSON(payload);
       if (res && res.ok) setEnvio({ estado:"sucesso" });
       else setEnvio({ estado:"erro", msg: (res && res.erro) || "Não foi possível anexar o material." });
     } catch (e) {
@@ -432,8 +491,8 @@ function MaterialApp() {
             <h2 style={{ fontSize:20, fontWeight:800, color:C.azul, letterSpacing:-0.3, margin:"0 0 6px" }}>Adicionar material</h2>
             <p style={{ fontSize:14.5, color:C.cinza, lineHeight:1.55, margin:"0 0 18px" }}>Anexe o que tiver — cada item é opcional, e você pode voltar depois para incluir o restante.</p>
 
-            <LinhaUpload ico={Headphones} titulo="Podcast" descricao="arquivo .mp3"
-              accept="audio/mpeg,.mp3" arquivo={arq.podcast} jaTem={sel.material && !!sel.material.audioUrl}
+            <LinhaUpload ico={Headphones} titulo="Podcast" descricao="áudio (.mp3 ou .m4a)"
+              accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/aac,.mp3,.m4a,.mp4,.aac" arquivo={arq.podcast} jaTem={sel.material && !!sel.material.audioUrl}
               onPick={(f) => setArq((a) => ({ ...a, podcast:f }))} onClear={() => setArq((a) => ({ ...a, podcast:null }))} />
             <QuizEntrada key={sel.id} idToken={auth && auth.idToken} questoes={quizQuestoes} setQuestoes={setQuizQuestoes}
               jaTem={sel.material && Array.isArray(sel.material.quiz) && sel.material.quiz.length > 0} />
@@ -468,11 +527,8 @@ function MaterialApp() {
           <div onClick={(e) => e.stopPropagation()} style={{ background:"#fff", borderRadius:16, padding:28, width:"100%", maxWidth:420, textAlign:"center" }}>
             {envio.estado === "enviando" && (<>
               <div style={{ width:56, height:56, borderRadius:"50%", background:C.cianoClaro, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}><Loader2 size={28} color={C.ciano} className="girando" /></div>
-              <div style={{ fontWeight:800, fontSize:17, marginBottom:12 }}>Enviando material…</div>
-              <div style={{ height:10, borderRadius:999, background:C.cinzaClaro, overflow:"hidden" }}>
-                <div style={{ height:"100%", width:`${Math.round((envio.progresso || 0) * 100)}%`, background:C.ciano, borderRadius:999, transition:"width .2s ease" }} />
-              </div>
-              <div style={{ fontSize:12.5, color:C.cinza, marginTop:8 }}>{Math.round((envio.progresso || 0) * 100)}%</div>
+              <div style={{ fontWeight:800, fontSize:17, marginBottom:6 }}>Enviando material…</div>
+              <div style={{ fontSize:13, color:C.cinza, lineHeight:1.5 }}>Isso pode levar alguns segundos. Não feche esta janela.</div>
             </>)}
             {envio.estado === "sucesso" && (<>
               <div style={{ width:56, height:56, borderRadius:"50%", background:`${C.ok}1A`, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}><CheckCircle2 size={32} color={C.ok} /></div>
