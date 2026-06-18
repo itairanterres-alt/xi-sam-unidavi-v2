@@ -33,6 +33,11 @@ const Pause     = (p) => <Ico {...p}><rect x="6" y="4" width="4" height="16" rx=
 const SkipForward=(p)=> <Ico {...p}><path d="M5 4l10 8-10 8V4ZM19 5v14"/></Ico>;
 const X         = (p) => <Ico {...p}><path d="M18 6 6 18M6 6l12 12"/></Ico>;
 const Upload    = (p) => <Ico {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></Ico>;
+const Headphones= (p) => <Ico {...p}><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H4a1 1 0 0 1-1-1v-9a9 9 0 0 1 18 0v9a1 1 0 0 1-1 1h-2a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></Ico>;
+const ListChecks= (p) => <Ico {...p}><path d="m3 17 2 2 4-4M3 7l2 2 4-4M13 6h8M13 12h8M13 18h8"/></Ico>;
+const Layers    = (p) => <Ico {...p}><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m6.08 9.5-3.48 1.59a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83L17.92 9.5"/></Ico>;
+const RotateCw  = (p) => <Ico {...p}><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></Ico>;
+const Check     = (p) => <Ico {...p}><path d="M20 6 9 17l-5-5"/></Ico>;
 
 /* ---------- QR real (aponta para a URL pública do trabalho) ---------- */
 function qrUrlFor(id) {
@@ -299,7 +304,7 @@ function EstadoVazio({ escuro = false, style }) {
 Object.assign(window, {
   Ico, Monitor, Smartphone, CalendarDays, ChevronLeft, ChevronRight, MapPin,
   Microscope, Stethoscope, ImageIcon, Coffee, Mic, Users, UserRound, Award, ArrowLeft,
-  Lock, Play, Pause, SkipForward, X, Upload, QRCode, qrUrlFor, useHashRoute, useScale, useWide, useFit, usePosterMode,
+  Lock, Play, Pause, SkipForward, X, Upload, Headphones, ListChecks, Layers, RotateCw, Check, QRCode, qrUrlFor, useHashRoute, useScale, useWide, useFit, usePosterMode,
   SAM_API_URL, useTrabalhos, trabalhoNaLista, normalizaNome, similaridadeNomes, casarTrabalho,
   Carregando, EstadoVazio, FRASE_SEM_TRABALHOS,
 });

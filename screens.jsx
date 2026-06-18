@@ -1,4 +1,4 @@
-/* ==================================/* ============================================================
+/* ============================================================
    XI SAM 2026 — TELAS: Home, PaginaTrabalho, Telao
    ============================================================ */
 
@@ -146,6 +146,7 @@ function Home() {
                       <div style={{ display:"flex", alignItems:"center", gap:9, marginTop:7 }}>
                         <AvatarAutor url={t ? (t.foto_autores_url || t.foto_autores_dataUrl) : null} size={32} />
                         <span style={{ fontSize:12.5, color:C.cinza, flex:1, minWidth:0 }}>{it.ap}</span>
+                        {t && <SeloMaterial t={t} />}
                         {t ? <SeloVer t={t} /> : <span style={{ fontSize:11.5, color:"#9AA8B8", whiteSpace:"nowrap" }}>em breve</span>}
                       </div>
                     </div>
@@ -217,6 +218,7 @@ function Home() {
                 <div style={{ display:"flex", alignItems:"center", gap:9, marginTop:4 }}>
                   <AvatarAutor url={t ? (t.foto_autores_url || t.foto_autores_dataUrl) : null} size={32} />
                   <span style={{ fontSize:12.5, color:C.cinza, flex:1, minWidth:0 }}>{p.ap}</span>
+                  {t && <SeloMaterial t={t} />}
                   {t ? <SeloVer t={t} /> : <span style={{ fontSize:11.5, color:"#9AA8B8", whiteSpace:"nowrap" }}>em breve</span>}
                 </div>
               </>
@@ -263,6 +265,7 @@ function Home() {
                     <div style={{ display:"flex", alignItems:"center", gap:9, marginTop:7 }}>
                       <AvatarAutor url={t.foto_autores_url || t.foto_autores_dataUrl} size={34} />
                       <span style={{ fontSize:12.5, color:C.cinza, flex:1, minWidth:0 }}>{o.ap}</span>
+                      <SeloMaterial t={t} />
                       <SeloVer t={t} />
                     </div>
                   ) : (
