@@ -77,6 +77,7 @@ const FileText    = (p) => <SIco {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 
 const Copy        = (p) => <SIco {...p}><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></SIco>;
 const Check       = (p) => <SIco {...p}><path d="M20 6 9 17l-5-5"/></SIco>;
 const ListChecks  = (p) => <SIco {...p}><path d="m3 17 2 2 4-4M3 7l2 2 4-4M13 6h8M13 12h8M13 18h8"/></SIco>;
+const Headphones  = (p) => <SIco {...p}><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H4a1 1 0 0 1-1-1v-9a9 9 0 0 1 18 0v9a1 1 0 0 1-1 1h-2a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></SIco>;
 const ClipboardList=(p) => <SIco {...p}><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></SIco>;
 const PenLine     = (p) => <SIco {...p}><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></SIco>;
 const ChevronDown = (p) => <SIco {...p}><path d="m6 9 6 6 6-6"/></SIco>;
@@ -494,6 +495,10 @@ function ComoSubmeter({ onIr }) {
       <button onClick={onIr} style={{ width:"100%", background:C.azul, color:"#fff", border:"none", borderRadius:11, padding:"14px", fontSize:14.5, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
         <PenLine size={17} color="#fff"/> Começar minha submissão
       </button>
+      {/* navegação secundária: anexar material a um trabalho já submetido (login na própria página) */}
+      <a href="material.html" style={{ marginTop:12, width:"100%", boxSizing:"border-box", background:"#fff", color:C.azul, border:`1px solid ${C.ciano}66`, borderRadius:11, padding:"13px", fontSize:14, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8, textDecoration:"none" }}>
+        <Headphones size={16} color={C.azul}/> Já submeteu? Adicionar material (podcast, quiz, flashcards)
+      </a>
     </div>
   );
 }
@@ -653,7 +658,7 @@ function SubmissaoApp() {
             <div style={{ height:42, backgroundImage:`url(${(window.__resources && window.__resources.logoStrip) || "assets/logo-strip.jpeg"})`, backgroundSize:"contain", backgroundRepeat:"no-repeat", backgroundPosition:"center" }} role="img" aria-label="Medicina UNIDAVI · NPCMed · SAM 2026" />
           </div>
         </div>
-        <div style={{ maxWidth:1280, margin:"0 auto", padding:"0 16px", display:"flex", gap:4 }}>
+        <div style={{ maxWidth:1280, margin:"0 auto", padding:"0 16px", display:"flex", gap:4, alignItems:"center" }}>
           {[{k:"como",ic:<FileText size={15}/>,t:"Como submeter"},{k:"form",ic:<PenLine size={15}/>,t:edicao?"Editar trabalho":"Cadastrar trabalho"}].map(tab=>{
             const on = aba===tab.k;
             return (
@@ -662,6 +667,10 @@ function SubmissaoApp() {
               </button>
             );
           })}
+          {/* navegação para a página de material (login acontece lá) */}
+          <a href="material.html" style={{ marginLeft:"auto", display:"inline-flex", alignItems:"center", gap:7, textDecoration:"none", background:C.cianoClaro, color:C.azul, border:`1px solid ${C.ciano}55`, borderRadius:999, padding:"7px 14px", fontSize:13, fontWeight:700, whiteSpace:"nowrap" }}>
+            <Headphones size={15} color={C.azul}/> Adicionar material
+          </a>
         </div>
       </header>
 

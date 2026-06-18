@@ -6,7 +6,8 @@
      1. "Entrar com Google" → recebe o ID token (JWT).
      2. POST { tipo:"material_trabalhos", idToken } → trabalhos do e-mail.
         · 0 trabalhos → aviso · 1 → abre direto · 2+ → lista para escolher.
-     3. Anexa podcast (.mp3) / quiz (.txt) / flashcards (.csv), todos opcionais.
+     3. Anexa podcast (.mp3) / flashcards (.csv) e cola o texto do quiz
+        (pré-visualizado no backend → questões estruturadas), todos opcionais.
      4. Declaração obrigatória + POST { tipo:"material", idToken, id, ... }.
    POST em text/plain;charset=utf-8 (evita preflight CORS); arquivos em base64.
    Página autossuficiente (sem imports de módulo).
@@ -156,6 +157,108 @@ function LinhaUpload({ ico:Ico, titulo, descricao, accept, arquivo, jaTem, onPic
   );
 }
 
+/* ---------- entrada do quiz: cola o texto do NotebookLM → backend devolve
+   questões estruturadas (POST tipo:"quiz_preview"). O array confirmado na
+   pré-visualização sobe no envio como quiz:{ questoes:[...] }. ---------- */
+function QuizEntrada({ idToken, questoes, setQuestoes, jaTem }) {
+  const [texto, setTexto] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | carregando | erro
+  const [erro, setErro] = useState("");
+  const temQuiz = Array.isArray(questoes) && questoes.length > 0;
+
+  const previsualizar = async () => {
+    const t = texto.trim();
+    if (!t) { setErro("Cole o texto do quiz gerado no NotebookLM antes de pré-visualizar."); setStatus("erro"); return; }
+    setStatus("carregando"); setErro("");
+    try {
+      const res = await postJSON({ tipo:"quiz_preview", idToken, texto: t });
+      if (!res || res.ok === false || res.erro) throw new Error((res && res.erro) || "Não foi possível interpretar o quiz. Revise o texto colado e tente de novo.");
+      const qs = (res.questoes || []).filter((q) => q && q.pergunta && Array.isArray(q.alternativas) && q.alternativas.length >= 2);
+      if (!qs.length) throw new Error("Nenhuma questão foi reconhecida no texto. Confira o conteúdo colado e tente de novo.");
+      setQuestoes(qs); setStatus("idle");
+    } catch (e) {
+      setStatus("erro"); setErro(String(e && e.message || e));
+    }
+  };
+  const refazer = () => { setQuestoes(null); setStatus("idle"); setErro(""); };
+
+  const ativo = temQuiz;
+  return (
+    <div style={{ border:`1px solid ${ativo ? C.ciano : "#E3EAF2"}`, borderRadius:12, padding:14, background: ativo ? C.cianoClaro : "#fff", marginBottom:12 }}>
+      <div style={{ display:"flex", gap:12, alignItems:"flex-start" }}>
+        <div style={{ width:42, height:42, borderRadius:10, background: ativo ? "#fff" : C.cianoClaro, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+          <ListChecks size={20} color={C.azul} />
+        </div>
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ display:"flex", alignItems:"baseline", gap:8, flexWrap:"wrap" }}>
+            <span style={{ fontSize:14.5, fontWeight:700, color:C.tinta }}>Quiz</span>
+            <span style={{ fontSize:12, color:C.cinza }}>texto do NotebookLM</span>
+            {jaTem && !temQuiz && <span style={{ fontSize:11, fontWeight:700, color:C.ok, display:"inline-flex", alignItems:"center", gap:3 }}><Check size={12} color={C.ok} /> já anexado</span>}
+          </div>
+
+          {!temQuiz ? (
+            <div style={{ marginTop:10 }}>
+              <textarea value={texto} onChange={(e) => { setTexto(e.target.value); if (status === "erro") setStatus("idle"); }}
+                placeholder="Cole aqui o texto do quiz gerado no NotebookLM" rows={6}
+                style={{ width:"100%", boxSizing:"border-box", border:"1px solid #E3EAF2", borderRadius:10, padding:"11px 12px", fontSize:14, lineHeight:1.5, color:C.tinta, resize:"vertical", background:"#fff" }} />
+              {status === "erro" && (
+                <div style={{ marginTop:8, background:"#FBEAE8", border:"1px solid #E8C5C0", borderRadius:9, padding:"9px 12px", fontSize:13, color:"#7A2616", display:"flex", gap:8, alignItems:"flex-start", lineHeight:1.45 }}>
+                  <AlertCircle size={15} color={C.erro} style={{ marginTop:1, flexShrink:0 }} /><span>{erro}</span>
+                </div>
+              )}
+              <button onClick={previsualizar} disabled={status === "carregando"}
+                style={{ marginTop:10, display:"inline-flex", alignItems:"center", gap:7, border:"none", background: status === "carregando" ? C.cinza : C.azul, color:"#fff", borderRadius:9, padding:"9px 15px", fontSize:13.5, fontWeight:700, cursor: status === "carregando" ? "default" : "pointer" }}>
+                {status === "carregando" ? <><Loader2 size={15} color="#fff" className="girando" /> Gerando pré-visualização…</> : <><ListChecks size={15} color="#fff" /> Pré-visualizar quiz</>}
+              </button>
+            </div>
+          ) : (
+            <div style={{ marginTop:10 }}>
+              <div style={{ fontSize:13, color:C.azulEsc, fontWeight:600, display:"flex", alignItems:"center", gap:6, marginBottom:10 }}>
+                <CheckCircle2 size={15} color={C.ok} /> {questoes.length} {questoes.length === 1 ? "questão reconhecida" : "questões reconhecidas"} — confira antes de enviar
+              </div>
+              <QuizPreview questoes={questoes} />
+              <button onClick={refazer} style={{ marginTop:12, display:"inline-flex", alignItems:"center", gap:6, border:"1px solid #E3EAF2", background:"#fff", color:C.azul, borderRadius:8, padding:"7px 13px", fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                <Trash2 size={13} /> Refazer / editar texto
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* pré-visualização read-only das questões estruturadas */
+function QuizPreview({ questoes }) {
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+      {questoes.map((q, qi) => (
+        <div key={qi} style={{ background:"#fff", border:"1px solid #E3EAF2", borderRadius:11, padding:"13px 14px" }}>
+          <div style={{ fontSize:11, fontWeight:800, color:C.cinza, letterSpacing:0.6, textTransform:"uppercase", marginBottom:6 }}>Questão {qi + 1}</div>
+          <div style={{ fontSize:14.5, fontWeight:700, color:C.tinta, lineHeight:1.4, marginBottom:10 }}>{q.pergunta}</div>
+          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+            {q.alternativas.map((alt, ai) => {
+              const correta = ai === q.correta;
+              return (
+                <div key={ai} style={{ display:"flex", gap:9, alignItems:"flex-start", border:`1.5px solid ${correta ? "#1F8A5B" : "#E3EAF2"}`, background: correta ? "#EAF7EF" : "#fff", color: correta ? "#15663F" : C.tinta, borderRadius:9, padding:"9px 11px", fontSize:13.5, lineHeight:1.4 }}>
+                  <span style={{ fontWeight:800 }}>{String.fromCharCode(65 + ai)}</span>
+                  <span style={{ flex:1 }}>{alt}</span>
+                  {correta && <Check size={15} color="#1F8A5B" />}
+                </div>
+              );
+            })}
+          </div>
+          {q.explicacao && (
+            <div style={{ marginTop:10, background:C.papel, border:"1px solid #E3EAF2", borderRadius:9, padding:"9px 12px", fontSize:13, lineHeight:1.5, color:C.cinza }}>
+              <strong style={{ color:C.azul }}>Explicação. </strong>{q.explicacao}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ============================ APP ============================ */
 function MaterialApp() {
   // fase: login | carregando | erroAuth | lista | form
@@ -164,7 +267,8 @@ function MaterialApp() {
   const [erroMsg, setErroMsg] = useState("");
   const [trabalhos, setTrabalhos] = useState([]);  // [{ id, titulo, autor, material }]
   const [sel, setSel] = useState(null);            // trabalho escolhido
-  const [arq, setArq] = useState({ podcast:null, quiz:null, flashcards:null });
+  const [arq, setArq] = useState({ podcast:null, flashcards:null });
+  const [quizQuestoes, setQuizQuestoes] = useState(null); // array confirmado na pré-visualização, ou null
   const [declaracao, setDeclaracao] = useState(false);
   const [envio, setEnvio] = useState(null);        // null | {estado:"enviando",progresso} | {estado:"sucesso"} | {estado:"erro",msg}
 
@@ -204,11 +308,12 @@ function MaterialApp() {
 
   const sair = () => {
     try { window.google.accounts.id.disableAutoSelect(); } catch (e) {}
-    setAuth(null); setTrabalhos([]); setSel(null); setArq({ podcast:null, quiz:null, flashcards:null }); setDeclaracao(false); setErroMsg(""); setFase("login");
+    setAuth(null); setTrabalhos([]); setSel(null); setArq({ podcast:null, flashcards:null }); setQuizQuestoes(null); setDeclaracao(false); setErroMsg(""); setFase("login");
   };
 
-  const temAlgum = !!(arq.podcast || arq.quiz || arq.flashcards);
-  const algumGrande = [arq.podcast, arq.quiz, arq.flashcards].some((f) => f && f.size > MAX_MB * 1024 * 1024);
+  const temQuiz = Array.isArray(quizQuestoes) && quizQuestoes.length > 0;
+  const temAlgum = !!(arq.podcast || arq.flashcards || temQuiz);
+  const algumGrande = [arq.podcast, arq.flashcards].some((f) => f && f.size > MAX_MB * 1024 * 1024);
   const podeEnviar = declaracao && temAlgum && !algumGrande && sel && auth;
 
   const enviar = async () => {
@@ -217,7 +322,7 @@ function MaterialApp() {
     try {
       const payload = { tipo:"material", idToken: auth.idToken, id: sel.id, declaracao:true, podcast:null, quiz:null, flashcards:null };
       if (arq.podcast)    payload.podcast    = { nome: arq.podcast.name,    base64: await readBase64(arq.podcast) };
-      if (arq.quiz)       payload.quiz       = { nome: arq.quiz.name,       base64: await readBase64(arq.quiz) };
+      if (temQuiz)        payload.quiz       = { questoes: quizQuestoes };
       if (arq.flashcards) payload.flashcards = { nome: arq.flashcards.name, base64: await readBase64(arq.flashcards) };
       const res = await postComProgresso(payload, (p) => setEnvio({ estado:"enviando", progresso:p }));
       if (res && res.ok) setEnvio({ estado:"sucesso" });
@@ -289,7 +394,7 @@ function MaterialApp() {
             <p style={{ fontSize:14, color:C.cinza, lineHeight:1.5, margin:"0 0 16px" }}>Você tem mais de um trabalho. Selecione a qual deseja anexar material.</p>
             <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
               {trabalhos.map((t) => (
-                <button key={t.id} onClick={() => { setSel(t); setArq({ podcast:null, quiz:null, flashcards:null }); setDeclaracao(false); setFase("form"); }}
+                <button key={t.id} onClick={() => { setSel(t); setArq({ podcast:null, flashcards:null }); setQuizQuestoes(null); setDeclaracao(false); setFase("form"); }}
                   style={{ ...card, padding:16, display:"flex", gap:12, alignItems:"center", textAlign:"left", cursor:"pointer", width:"100%" }}>
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:15, fontWeight:700, color:C.tinta, lineHeight:1.3 }}>{t.titulo || t.id}</div>
@@ -330,9 +435,8 @@ function MaterialApp() {
             <LinhaUpload ico={Headphones} titulo="Podcast" descricao="arquivo .mp3"
               accept="audio/mpeg,.mp3" arquivo={arq.podcast} jaTem={sel.material && !!sel.material.audioUrl}
               onPick={(f) => setArq((a) => ({ ...a, podcast:f }))} onClear={() => setArq((a) => ({ ...a, podcast:null }))} />
-            <LinhaUpload ico={ListChecks} titulo="Quiz" descricao="arquivo .txt"
-              accept="text/plain,.txt" arquivo={arq.quiz} jaTem={sel.material && !!sel.material.quizText}
-              onPick={(f) => setArq((a) => ({ ...a, quiz:f }))} onClear={() => setArq((a) => ({ ...a, quiz:null }))} />
+            <QuizEntrada key={sel.id} idToken={auth && auth.idToken} questoes={quizQuestoes} setQuestoes={setQuizQuestoes}
+              jaTem={sel.material && Array.isArray(sel.material.quiz) && sel.material.quiz.length > 0} />
             <LinhaUpload ico={Layers} titulo="Flashcards" descricao="arquivo .csv"
               accept="text/csv,.csv" arquivo={arq.flashcards} jaTem={sel.material && !!sel.material.flashcardsText}
               onPick={(f) => setArq((a) => ({ ...a, flashcards:f }))} onClear={() => setArq((a) => ({ ...a, flashcards:null }))} />
@@ -374,7 +478,7 @@ function MaterialApp() {
               <div style={{ width:56, height:56, borderRadius:"50%", background:`${C.ok}1A`, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}><CheckCircle2 size={32} color={C.ok} /></div>
               <div style={{ fontWeight:800, fontSize:18, marginBottom:8 }}>Material anexado!</div>
               <div style={{ fontSize:14, color:C.cinza, lineHeight:1.5 }}>O material foi anexado ao seu trabalho. Você pode fechar esta página ou voltar depois para incluir mais.</div>
-              <button onClick={() => { setEnvio(null); setArq({ podcast:null, quiz:null, flashcards:null }); setDeclaracao(false); if (auth) buscarTrabalhos(auth.idToken, sel && sel.id); }} style={{ background:C.azul, color:"#fff", border:"none", borderRadius:10, padding:"11px 22px", fontSize:14, fontWeight:700, cursor:"pointer", marginTop:16 }}>Concluir</button>
+              <button onClick={() => { setEnvio(null); setArq({ podcast:null, flashcards:null }); setQuizQuestoes(null); setDeclaracao(false); if (auth) buscarTrabalhos(auth.idToken, sel && sel.id); }} style={{ background:C.azul, color:"#fff", border:"none", borderRadius:10, padding:"11px 22px", fontSize:14, fontWeight:700, cursor:"pointer", marginTop:16 }}>Concluir</button>
             </>)}
             {envio.estado === "erro" && (<>
               <div style={{ width:56, height:56, borderRadius:"50%", background:"#FBEAE8", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}><X size={30} color={C.erro} /></div>

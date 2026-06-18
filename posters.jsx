@@ -1016,29 +1016,33 @@ function RefsLeitura({ t, cor }) {
   );
 }
 /* ===== MATERIAL SUPLEMENTAR (podcast · quiz · flashcards) =====
-   Lido de t.material = { audioUrl, quizText, flashcardsText }. Cada recurso
-   é OPCIONAL — só renderiza a aba do que existir. Parsers tolerantes a
-   espaços e linhas vazias; nada é embaralhado (mantém a ordem do arquivo). */
+   Lido de t.material = { audioUrl, quiz, flashcardsText }. Cada recurso é
+   OPCIONAL — só renderiza a aba do que existir. quiz já vem ESTRUTURADO
+   (array de questões { pergunta, alternativas:[4], correta:0..3, explicacao });
+   flashcardsText é CSV padrão (vírgula separadora, aspas duplas). */
 const _matNavBtn = { display:"inline-flex", alignItems:"center", gap:6, border:"1px solid #E3EAF2", background:"#fff", color:C.azul, borderRadius:9, padding:"11px 16px", fontSize:13.5, fontWeight:700, cursor:"pointer", fontFamily:"inherit" };
-function parseFlashcards(csv) {
-  return String(csv || "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((linha) => {
-    const i = linha.indexOf(";");
-    return i < 0 ? { frente: linha, verso: "" } : { frente: linha.slice(0, i).trim(), verso: linha.slice(i + 1).trim() };
-  }).filter((c) => c.frente);
+/* CSV padrão: vírgula separadora; campos com vírgula/quebra entre aspas duplas;
+   "" representa uma aspa literal dentro de campo citado. Sem cabeçalho. */
+function parseCSV(texto) {
+  const linhas = []; let campo = "", linha = [], emAspas = false;
+  const s = String(texto || "");
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (emAspas) {
+      if (c === '"') { if (s[i + 1] === '"') { campo += '"'; i++; } else emAspas = false; }
+      else campo += c;
+    } else if (c === '"') emAspas = true;
+    else if (c === ",") { linha.push(campo); campo = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && s[i + 1] === "\n") i++; linha.push(campo); linhas.push(linha); linha = []; campo = ""; }
+    else campo += c;
+  }
+  if (campo.length || linha.length) { linha.push(campo); linhas.push(linha); }
+  return linhas.filter((l) => l.some((x) => x.trim() !== ""));
 }
-function parseQuiz(txt) {
-  return String(txt || "").split(/\r?\n?\s*---\s*\r?\n?/).map((b) => b.trim()).filter(Boolean).map((bloco) => {
-    const linhas = bloco.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-    let pergunta = "", correta = "", explicacao = ""; const alts = [];
-    linhas.forEach((l) => {
-      let m;
-      if (m = l.match(/^P\s*:\s*(.*)$/i)) pergunta = m[1].trim();
-      else if (m = l.match(/^([A-D])\s*[\)\.]\s*(.*)$/i)) alts.push({ letra: m[1].toUpperCase(), texto: m[2].trim() });
-      else if (m = l.match(/^Correta\s*:\s*([A-D])/i)) correta = m[1].toUpperCase();
-      else if (m = l.match(/^Explica[\u00e7c][\u00e3a]o\s*:\s*(.*)$/i)) explicacao = m[1].trim();
-    });
-    return { pergunta, alts, correta, explicacao };
-  }).filter((q) => q.pergunta && q.alts.length);
+function parseFlashcards(csv) {
+  return parseCSV(csv)
+    .map((cols) => ({ frente: (cols[0] || "").trim(), verso: (cols[1] || "").trim() }))
+    .filter((c) => c.frente);
 }
 function Flashcards({ cards }) {
   const [i, setI] = React.useState(0);
@@ -1064,11 +1068,12 @@ function Flashcards({ cards }) {
 }
 function Quiz({ questions }) {
   const [i, setI] = React.useState(0);
-  const [escolha, setEscolha] = React.useState(null);
+  const [escolha, setEscolha] = React.useState(null); // índice 0..3 ou null
   const [acertos, setAcertos] = React.useState(0);
   const [fim, setFim] = React.useState(false);
   const q = questions[i];
-  const responder = (letra) => { if (escolha) return; setEscolha(letra); if (letra === q.correta) setAcertos((a) => a + 1); };
+  const respondido = escolha !== null;
+  const responder = (idx) => { if (respondido) return; setEscolha(idx); if (idx === q.correta) setAcertos((a) => a + 1); };
   const proxima = () => { if (i + 1 >= questions.length) setFim(true); else { setI(i + 1); setEscolha(null); } };
   const reiniciar = () => { setI(0); setEscolha(null); setAcertos(0); setFim(false); };
   if (fim) return (
@@ -1083,29 +1088,28 @@ function Quiz({ questions }) {
       <div style={{ fontSize:12, color:C.cinza, fontWeight:700, marginBottom:8 }}>Questão {i + 1} de {questions.length}</div>
       <div style={{ fontSize:16, fontWeight:700, color:C.tinta, lineHeight:1.4, marginBottom:14 }}>{q.pergunta}</div>
       <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-        {q.alts.map((a) => {
-          const respondido = !!escolha;
-          const ehCorreta = a.letra === q.correta;
-          const ehEscolhida = a.letra === escolha;
+        {q.alternativas.map((texto, idx) => {
+          const ehCorreta = idx === q.correta;
+          const ehEscolhida = idx === escolha;
           let bg = "#fff", bd = "#E3EAF2", fg = C.tinta;
           if (respondido && ehCorreta) { bg = "#EAF7EF"; bd = "#1F8A5B"; fg = "#15663F"; }
           else if (respondido && ehEscolhida && !ehCorreta) { bg = "#FBEAE8"; bd = "#C0392B"; fg = "#7A2616"; }
           return (
-            <button key={a.letra} onClick={() => responder(a.letra)} disabled={respondido}
+            <button key={idx} onClick={() => responder(idx)} disabled={respondido}
               style={{ display:"flex", gap:10, alignItems:"flex-start", textAlign:"left", border:`1.5px solid ${bd}`, background:bg, color:fg, borderRadius:11, padding:"12px 14px", fontSize:14.5, cursor: respondido ? "default" : "pointer", fontFamily:"inherit", lineHeight:1.4 }}>
-              <span style={{ fontWeight:800 }}>{a.letra}</span><span style={{ flex:1 }}>{a.texto}</span>
+              <span style={{ fontWeight:800 }}>{String.fromCharCode(65 + idx)}</span><span style={{ flex:1 }}>{texto}</span>
               {respondido && ehCorreta && <Check size={17} color="#1F8A5B" />}
               {respondido && ehEscolhida && !ehCorreta && <X size={17} color="#C0392B" />}
             </button>
           );
         })}
       </div>
-      {escolha && q.explicacao && (
+      {respondido && q.explicacao && (
         <div style={{ marginTop:14, background:C.papel, border:"1px solid #E3EAF2", borderRadius:11, padding:"12px 14px", fontSize:14, lineHeight:1.5, color:C.cinza }}>
           <strong style={{ color:C.azul }}>Explicação. </strong>{q.explicacao}
         </div>
       )}
-      {escolha && (
+      {respondido && (
         <div style={{ display:"flex", justifyContent:"flex-end", marginTop:14 }}>
           <button onClick={proxima} style={_matNavBtn}>{i + 1 >= questions.length ? "Ver resultado" : "Próxima"} <ChevronRight size={16} /></button>
         </div>
@@ -1118,7 +1122,7 @@ function _tiposMaterial(t) {
   const m = t && t.material; if (!m) return [];
   const out = [];
   if (m.audioUrl) out.push({ k:"audio", ic:Headphones, rotulo:"Podcast" });
-  if (m.quizText && String(m.quizText).trim()) out.push({ k:"quiz", ic:ListChecks, rotulo:"Quiz" });
+  if (Array.isArray(m.quiz) && m.quiz.length) out.push({ k:"quiz", ic:ListChecks, rotulo:"Quiz" });
   if (m.flashcardsText && String(m.flashcardsText).trim()) out.push({ k:"flashcards", ic:Layers, rotulo:"Flashcards" });
   return out;
 }
@@ -1138,7 +1142,7 @@ function MaterialSuplementar({ t }) {
   const m = t.material || null;
   const cor = AREA_COR[t.area] || C.azul;
   const flashcards = React.useMemo(() => (m ? parseFlashcards(m.flashcardsText) : []), [m]);
-  const quiz = React.useMemo(() => (m ? parseQuiz(m.quizText) : []), [m]);
+  const quiz = (m && Array.isArray(m.quiz)) ? m.quiz : [];
   const temAudio = !!(m && m.audioUrl);
   const abas = [];
   if (temAudio) abas.push({ k:"audio", t:"Ouvir", ic:Headphones });
