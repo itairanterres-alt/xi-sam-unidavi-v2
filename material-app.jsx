@@ -86,7 +86,7 @@ function postComProgresso(payload, onProgress) {
   });
 }
 const fmtTamanho = (b) => b < 1024 * 1024 ? (b / 1024).toFixed(0) + " KB" : (b / 1024 / 1024).toFixed(1) + " MB";
-const MAX_MB = 20;
+const MAX_MB = 35;
 
 /* ---------- botão "Entrar com Google" (GIS) ---------- */
 function BotaoGoogle({ onCredential }) {

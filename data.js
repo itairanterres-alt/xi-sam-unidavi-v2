@@ -162,7 +162,7 @@ const PROGRAMA = {
       { tc:"TC2", hora:"18h40", area:"Pediatria", ap:"Ana Julia Barpi", titulo:"Fatores de risco maternos, neonatais e assistenciais para o desenvolvimento de sepse neonatal em um hospital terciário: análise e prevenção", uc:"Franciani Rodrigues da Rocha" },
       { tc:"TC3", hora:"19h20", area:"Pediatria", ap:"Isadora Rosa Mergener de Bortolo", titulo:"Perfil epidemiológico das internações por bronquiolite aguda no Alto Vale do Itajaí entre 2020 e 2025: um estudo transversal", uc:"Alinne Petris" },
       { tc:"TC4", hora:"20h00", area:"Infectologia", ap:"Joana Rosa de Jesus", titulo:"Além da tríade de OMS: meta-análise bivariada de acurácia diagnóstica de biomarcadores moleculares, sorológicos inovadores e ultrassonográficos para a lacuna diagnóstica na hanseníase", uc:"Franciani Rodrigues da Rocha" },
-      { tc:"TC5", hora:"20h40", area:"Infectologia", ap:"Gabriela Luiza de Andrade Muller", titulo:"Infecções bacterianas em pacientes hospitalizados: perfil microbiológico, sensibilidade antimicrobiana e desfecho clínico em hospital terciário de Santa Catarina, Brasil", uc:"Alinne Petris" },
+      { tc:"TC5", hora:"20h40", area:"Infectologia", ap:"Gabriela Luiza de Andrade Muller", titulo:"Infecções bacterianas em pacientes hospitalizados: perfil microbiológico, sensibilidade antimicrobiana e desfecho clínico em hospital terciário de Santa Catarina, Brasil - estudo observacional retrospectivo", uc:"Alinne Petris" },
       { tc:"TC6", hora:"21h20", area:"Pediatria", ap:"Yasmin dos Prazeres Araujo", titulo:"Síndrome DRESS induzida por antibióticos no tratamento de pneumonia necrotizante em paciente pediátrico: um relato de caso", uc:"Alinne Petris" },
     ],
     posteres:[
@@ -176,12 +176,12 @@ const PROGRAMA = {
     ] },
   "Sex · 26/06": { sci:"16h20–17h20", youtube:"https://www.youtube.com/watch?v=KfSxB-WxbVw",
     orais:[
-      { tc:"TC1", hora:"17h20", area:"Medicina de Família e Comunidade", ap:"Isabela Lamin Klegin", titulo:"Internações por acidente vascular cerebral no Brasil antes, durante e após a pandemia de Covid-19: estudo ecológico de série temporal", uc:"Franciani Rodrigues da Rocha" },
-      { tc:"TC2", hora:"18h00", area:"Cirurgia Vascular", ap:"Rafaela Fritsche", titulo:"Fatores associados e desfechos clínicos de pacientes com doença arterial obstrutiva periférica em um hospital do Alto Vale do Itajaí", uc:"Franciani Rodrigues da Rocha" },
+      { tc:"TC1", hora:"17h20", area:"Cardiologia", ap:"Marcel Felipe Alves", titulo:"Avaliação ecocardiográfica da disfunção diastólica do ventrículo esquerdo induzida por quimioterapia: uma revisão sistemática e meta-análise", uc:"Alinne Petris" },
+      { tc:"TC2", hora:"18h00", area:"Cirurgia Vascular", ap:"Rafaela Fritsche", titulo:"Fatores associados e estratégias terapêuticas de pacientes com doença arterial obstrutiva periférica em um hospital do Alto Vale do Itajaí", uc:"Franciani Rodrigues da Rocha" },
       { tc:"TC3", hora:"18h40", area:"Cardiologia", ap:"Ana Paula Deluca", titulo:"Preditores clínicos e laboratoriais de disfunção ventricular em pacientes com infarto agudo do miocárdio: uma coorte prospectiva", uc:"Cristina Bichels Hebeda" },
       { tc:"TC4", hora:"19h20", area:"Cardiologia", ap:"Carlos Gabriel Maiberg", titulo:"Comparação das internações e óbitos por infarto agudo do miocárdio no Brasil antes, durante e após a pandemia de covid-19: um estudo ecológico de séries temporais", uc:"Franciani Rodrigues da Rocha" },
       { tc:"TC5", hora:"20h00", area:"Cardiologia", ap:"Milena Dal Witt de Souza", titulo:"Revisitando a terapia com betabloqueadores para insuficiência cardíaca com fração de ejeção preservada: uma revisão sistemática e meta-análise", uc:"Samantha Cristiane Lopes" },
-      { tc:"TC6", hora:"20h40", area:"Cardiologia", ap:"Marcel Felipe Alves", titulo:"Avaliação ecocardiográfica da disfunção diastólica do ventrículo esquerdo induzida por quimioterapia: uma revisão sistemática e meta-análise", uc:"Alinne Petris" },
+      { tc:"TC6", hora:"20h40", area:"Medicina de Família e Comunidade", ap:"Isabela Lamin Klegin", titulo:"Internações por acidente vascular cerebral no Brasil antes, durante e após a pandemia de Covid-19: estudo ecológico de série temporal", uc:"Franciani Rodrigues da Rocha" },
       { tc:"TC7", hora:"21h20", area:"Neurologia", ap:"Fábio Valerio Borelli", titulo:"Uso adjunto de tirofiban e efeito de primeira passagem durante trombectomia endovascular para oclusão de grandes vasos: uma revisão sistemática e metanálise", uc:"Samantha Cristiane Lopes" },
     ],
     posteres:[
