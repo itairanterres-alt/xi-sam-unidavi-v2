@@ -74,6 +74,8 @@ const Loader2     = (p) => <SIco {...p}><path d="M21 12a9 9 0 1 1-6.219-8.56"/><
 const Users       = (p) => <SIco {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></SIco>;
 const UserRound   = (p) => <SIco {...p}><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></SIco>;
 const FileText    = (p) => <SIco {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></SIco>;
+const Copy        = (p) => <SIco {...p}><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></SIco>;
+const Check       = (p) => <SIco {...p}><path d="M20 6 9 17l-5-5"/></SIco>;
 const ListChecks  = (p) => <SIco {...p}><path d="m3 17 2 2 4-4M3 7l2 2 4-4M13 6h8M13 12h8M13 18h8"/></SIco>;
 const ClipboardList=(p) => <SIco {...p}><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></SIco>;
 const PenLine     = (p) => <SIco {...p}><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></SIco>;
@@ -106,6 +108,37 @@ function parseEditRoute(){
   const q = new URLSearchParams(i >= 0 ? h.slice(i+1) : "");
   const id = q.get("id"), token = q.get("token");
   return (id && token) ? { id, token } : null;
+}
+/* link pessoal de material (/material?t=TOKEN) derivado da URL atual,
+   funcionando tanto em preview (submissao.html) quanto em produção (/submissao) */
+function materialUrl(token) {
+  try {
+    const u = new URL(window.location.href);
+    u.hash = ""; u.search = "?t=" + encodeURIComponent(token);
+    if (/submissao/.test(u.pathname)) u.pathname = u.pathname.replace("submissao", "material");
+    else u.pathname = u.pathname.replace(/[^/]*$/, "material.html");
+    return u.toString();
+  } catch (e) { return "material.html?t=" + encodeURIComponent(token); }
+}
+/* caixa do link de material exibida na confirmação da submissão */
+function MaterialLinkBox({ url }) {
+  const [copiado, setCopiado] = useState(false);
+  const copiar = () => {
+    try { navigator.clipboard.writeText(url).then(() => { setCopiado(true); setTimeout(() => setCopiado(false), 1800); }); } catch (e) {}
+  };
+  return (
+    <div style={{ marginTop:16, textAlign:"left", background:C.cianoClaro, border:`1px solid ${C.ciano}44`, borderRadius:12, padding:"13px 14px" }}>
+      <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:6 }}>
+        <Smartphone size={16} color={C.azul} />
+        <span style={{ fontSize:13, fontWeight:800, color:C.azulEsc }}>Adicionar material (opcional)</span>
+      </div>
+      <div style={{ fontSize:12.5, color:C.cinza, lineHeight:1.5, marginBottom:10 }}>Podcast, quiz e flashcards do seu trabalho — a qualquer momento, por este link pessoal (também enviado no seu e-mail).</div>
+      <div style={{ display:"flex", gap:8, alignItems:"stretch" }}>
+        <a href={url} target="_blank" rel="noopener noreferrer" style={{ flex:1, minWidth:0, fontSize:12.5, color:C.azul, fontWeight:600, textDecoration:"none", background:"#fff", border:"1px solid #E3EAF2", borderRadius:9, padding:"9px 11px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{url}</a>
+        <button onClick={copiar} style={{ flexShrink:0, display:"inline-flex", alignItems:"center", gap:6, border:"none", background:C.azul, color:"#fff", borderRadius:9, padding:"9px 13px", fontSize:12.5, fontWeight:700, cursor:"pointer" }}>{copiado ? <><Check size={14} color="#fff"/> Copiado</> : <><Copy size={14} color="#fff"/> Copiar</>}</button>
+      </div>
+    </div>
+  );
 }
 const splitRefs = (s) => (s||"").split("\n").map(x=>x.trim()).filter(Boolean);
 
@@ -593,7 +626,7 @@ function SubmissaoApp() {
       const r = await fetch(API_URL, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
       const res = await r.json();
       if (res.ok) {
-        setResultado({ ok:true, id:res.id || (edicao && edicao.id) });
+        setResultado({ ok:true, id:res.id || (edicao && edicao.id), token: res.token || res.materialToken || (edicao && edicao.token) || null });
         if (!edicao) { try { localStorage.removeItem(RASCUNHO_KEY); } catch (e) {} }
       } else setResultado({ ok:false, erro:res.erro || "Erro desconhecido." });
     } catch (e) { setResultado({ ok:false, erro:String(e) }); } finally { setEnviando(false); }
@@ -801,6 +834,7 @@ function SubmissaoApp() {
               <div style={{ width:56, height:56, borderRadius:"50%", background:`${C.ciano}1A`, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}><CheckCircle2 size={32} color={C.ciano}/></div>
               <div style={{ fontWeight:800, fontSize:18, marginBottom:8 }}>{edicao ? "Atualização recebida!" : "Trabalho recebido!"}</div>
               <div style={{ fontSize:14, color:C.cinza, lineHeight:1.5 }}>Código <strong style={{ color:C.tinta }}>{resultado.id}</strong>. {edicao ? "A nova versão substitui a anterior e segue para a curadoria." : "Enviamos um e-mail de confirmação com o link para revisar ou ajustar."}</div>
+              {resultado.token && <MaterialLinkBox url={materialUrl(resultado.token)} />}
             </>) : (<>
               <div style={{ width:56, height:56, borderRadius:"50%", background:"#FBEAE8", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}><X size={30} color={C.erro}/></div>
               <div style={{ fontWeight:800, fontSize:18, marginBottom:8 }}>Não foi possível enviar</div>

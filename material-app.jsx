@@ -1,16 +1,26 @@
 /* ============================================================
-   XI SAM 2026 — ADICIONAR MATERIAL (página /material?t=TOKEN)
-   O aluno anexa podcast (.mp3), quiz (.txt) e/ou flashcards (.csv)
-   a uma submissão JÁ FEITA, sem ressubmeter o resumo.
-   · GET  ?tipo=material&token=...  → { titulo, autor, material|null }
-   · POST tipo:"material" (base64) → grava no Drive, retorna { ok:true }
-   POST em text/plain;charset=utf-8 (evita preflight CORS).
+   XI SAM 2026 — ADICIONAR MATERIAL (página /material)
+   Acesso por LOGIN GOOGLE (Google Identity Services), restrito ao
+   domínio UNIDAVI (parâmetro hd). Sem token na URL.
+   Fluxo:
+     1. "Entrar com Google" → recebe o ID token (JWT).
+     2. POST { tipo:"material_trabalhos", idToken } → trabalhos do e-mail.
+        · 0 trabalhos → aviso · 1 → abre direto · 2+ → lista para escolher.
+     3. Anexa podcast (.mp3) / quiz (.txt) / flashcards (.csv), todos opcionais.
+     4. Declaração obrigatória + POST { tipo:"material", idToken, id, ... }.
+   POST em text/plain;charset=utf-8 (evita preflight CORS); arquivos em base64.
    Página autossuficiente (sem imports de módulo).
    ============================================================ */
 const { useState, useEffect, useMemo, useRef } = React;
 
 // URL do "App da Web" do Apps Script (implantação ativa) — NÃO alterar.
 const API_URL = "https://script.google.com/macros/s/AKfycbw8GrSUw3Ck8Pt4qolDD44xy_4Y0vXv9KaUfEUZKFUk7qKUWyE8kJRpTqSX9AtdNRCrOg/exec";
+
+// >>> Client ID OAuth do Google (Web) <<<
+const GOOGLE_CLIENT_ID = "403359576266-0darbt2j0b0ggmprmjafmr7lg72akp3d.apps.googleusercontent.com";
+// Domínio institucional aceito no login (parâmetro hd do Google).
+const HD_DOMINIO = "unidavi.edu.br";
+const CLIENT_OK = /\.apps\.googleusercontent\.com$/.test(GOOGLE_CLIENT_ID) && !/^COLE_AQUI/.test(GOOGLE_CLIENT_ID);
 
 const C = {
   azul:"#023E88", azulEsc:"#01285A", ciano:"#00ADEF", cianoClaro:"#E5F6FE",
@@ -36,18 +46,17 @@ const Trash2      = (p) => <MIco {...p}><path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 
 const Loader2     = (p) => <MIco {...p}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></MIco>;
 const AlertCircle = (p) => <MIco {...p}><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></MIco>;
 const FileText    = (p) => <MIco {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></MIco>;
+const LogOut      = (p) => <MIco {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></MIco>;
+const ChevronRight= (p) => <MIco {...p}><path d="m9 18 6-6-6-6"/></MIco>;
 
 /* ---------- helpers ---------- */
-function getToken() {
+/* decodifica o payload do JWT (ID token) sem validar — só p/ exibir e-mail/nome */
+function decodeJwt(tok) {
   try {
-    const t = new URLSearchParams(window.location.search).get("t");
-    if (t) return t;
-    // tolera o token no hash (#?t=... ou #/material?t=...) em hospedagens sem clean-URL
-    const h = window.location.hash || "";
-    const i = h.indexOf("?");
-    if (i >= 0) return new URLSearchParams(h.slice(i + 1)).get("t");
-  } catch (e) {}
-  return null;
+    const b = tok.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const json = decodeURIComponent(atob(b).split("").map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join(""));
+    return JSON.parse(json);
+  } catch (e) { return {}; }
 }
 /* lê o arquivo como base64 puro (sem o prefixo data:...;base64,) */
 function readBase64(file) {
@@ -58,8 +67,13 @@ function readBase64(file) {
     r.readAsDataURL(file);
   });
 }
+/* POST JSON simples (text/plain evita preflight CORS) */
+async function postJSON(payload) {
+  const r = await fetch(API_URL, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+  return r.json();
+}
 /* POST com progresso de upload (XHR; text/plain evita preflight CORS) */
-function postMaterial(payload, onProgress) {
+function postComProgresso(payload, onProgress) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", API_URL);
@@ -72,6 +86,41 @@ function postMaterial(payload, onProgress) {
 }
 const fmtTamanho = (b) => b < 1024 * 1024 ? (b / 1024).toFixed(0) + " KB" : (b / 1024 / 1024).toFixed(1) + " MB";
 const MAX_MB = 20;
+
+/* ---------- botão "Entrar com Google" (GIS) ---------- */
+function BotaoGoogle({ onCredential }) {
+  const ref = useRef(null);
+  const [pronto, setPronto] = useState(false);
+  useEffect(() => {
+    if (!CLIENT_OK) return;
+    let cancelado = false;
+    const tentar = () => {
+      if (cancelado) return;
+      const g = window.google && window.google.accounts && window.google.accounts.id;
+      if (!g) { setTimeout(tentar, 150); return; }
+      try {
+        g.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onCredential, hd: HD_DOMINIO, auto_select:false, ux_mode:"popup" });
+        if (ref.current) g.renderButton(ref.current, { type:"standard", theme:"filled_blue", size:"large", text:"signin_with", shape:"pill", logo_alignment:"left", width:280 });
+        setPronto(true);
+      } catch (e) {}
+    };
+    tentar();
+    return () => { cancelado = true; };
+  }, []);
+  if (!CLIENT_OK) {
+    return (
+      <div style={{ background:"#FFF7E6", border:"1px solid #F0D9A0", borderRadius:12, padding:"13px 14px", fontSize:13, color:"#7A5A12", lineHeight:1.5, textAlign:"left" }}>
+        <strong>Configuração pendente.</strong> Defina o <code>GOOGLE_CLIENT_ID</code> em <code>material-app.jsx</code> com o Client ID OAuth do Google (termina em <code>.apps.googleusercontent.com</code>) para habilitar o login.
+      </div>
+    );
+  }
+  return (
+    <div>
+      <div ref={ref} style={{ display:"flex", justifyContent:"center", minHeight:44 }} />
+      {!pronto && <div style={{ fontSize:13, color:C.cinza, textAlign:"center", marginTop:8 }}>Carregando o login…</div>}
+    </div>
+  );
+}
 
 /* ---------- linha de upload (um por tipo) ---------- */
 function LinhaUpload({ ico:Ico, titulo, descricao, accept, arquivo, jaTem, onPick, onClear }) {
@@ -109,42 +158,68 @@ function LinhaUpload({ ico:Ico, titulo, descricao, accept, arquivo, jaTem, onPic
 
 /* ============================ APP ============================ */
 function MaterialApp() {
-  const token = useMemo(getToken, []);
-  const [estado, setEstado] = useState(token ? "carregando" : "semToken"); // semToken | carregando | erro | pronto
+  // fase: login | carregando | erroAuth | lista | form
+  const [fase, setFase] = useState("login");
+  const [auth, setAuth] = useState(null);          // { idToken, email, nome }
   const [erroMsg, setErroMsg] = useState("");
-  const [trabalho, setTrabalho] = useState(null);     // { titulo, autor, material }
+  const [trabalhos, setTrabalhos] = useState([]);  // [{ id, titulo, autor, material }]
+  const [sel, setSel] = useState(null);            // trabalho escolhido
   const [arq, setArq] = useState({ podcast:null, quiz:null, flashcards:null });
   const [declaracao, setDeclaracao] = useState(false);
-  const [envio, setEnvio] = useState(null);           // null | {estado:"enviando",progresso} | {estado:"sucesso"} | {estado:"erro",msg}
+  const [envio, setEnvio] = useState(null);        // null | {estado:"enviando",progresso} | {estado:"sucesso"} | {estado:"erro",msg}
 
-  const carregar = async () => {
-    setEstado("carregando"); setErroMsg("");
+  /* busca os trabalhos do e-mail logado; keepId mantém a seleção após reenvio */
+  const buscarTrabalhos = async (idToken, keepId) => {
+    setFase("carregando"); setErroMsg("");
     try {
-      const r = await fetch(`${API_URL}?tipo=material&token=${encodeURIComponent(token)}`);
-      const res = await r.json();
-      if (!res || res.ok === false || res.erro) throw new Error((res && res.erro) || "Link inválido. Confira se o endereço do e-mail está completo.");
-      setTrabalho({ titulo: res.titulo || "", autor: res.autor || "", material: res.material || null });
-      setEstado("pronto");
+      const res = await postJSON({ tipo:"material_trabalhos", idToken });
+      if (!res || res.ok === false || res.erro) throw new Error((res && res.erro) || "Não foi possível verificar a sua conta. Tente novamente.");
+      const lista = res.trabalhos || res.lista || [];
+      setTrabalhos(lista);
+      if (lista.length === 0) { setErroMsg("Não encontramos nenhum trabalho submetido com este e-mail. Use a mesma conta da submissão."); setFase("erroAuth"); return; }
+      if (keepId) { const m = lista.find((t) => t.id === keepId); if (m) { setSel(m); setFase("form"); return; } }
+      if (lista.length === 1) { setSel(lista[0]); setFase("form"); }
+      else { setSel(null); setFase("lista"); }
     } catch (e) {
-      setErroMsg(String(e && e.message || e));
-      setEstado("erro");
+      setErroMsg(String(e && e.message || e)); setFase("erroAuth");
     }
   };
-  useEffect(() => { if (token) carregar(); }, []);
+
+  const onCredential = (resp) => {
+    const idToken = resp && resp.credential;
+    if (!idToken) { setErroMsg("Login não concluído. Tente novamente."); setFase("erroAuth"); return; }
+    const p = decodeJwt(idToken);
+    const email = (p.email || "").toLowerCase();
+    // garantia extra no cliente (o hd já restringe no Google; a validação real é no backend)
+    if (HD_DOMINIO && p.hd !== HD_DOMINIO && !email.endsWith("@" + HD_DOMINIO)) {
+      setAuth(null);
+      setErroMsg(`Use a sua conta institucional @${HD_DOMINIO}. A conta "${email || "selecionada"}" não pertence ao domínio da UNIDAVI.`);
+      setFase("erroAuth");
+      try { window.google.accounts.id.disableAutoSelect(); } catch (e) {}
+      return;
+    }
+    setAuth({ idToken, email, nome: p.name || "" });
+    buscarTrabalhos(idToken);
+  };
+
+  const sair = () => {
+    try { window.google.accounts.id.disableAutoSelect(); } catch (e) {}
+    setAuth(null); setTrabalhos([]); setSel(null); setArq({ podcast:null, quiz:null, flashcards:null }); setDeclaracao(false); setErroMsg(""); setFase("login");
+  };
 
   const temAlgum = !!(arq.podcast || arq.quiz || arq.flashcards);
   const algumGrande = [arq.podcast, arq.quiz, arq.flashcards].some((f) => f && f.size > MAX_MB * 1024 * 1024);
-  const podeEnviar = declaracao && temAlgum && !algumGrande;
+  const podeEnviar = declaracao && temAlgum && !algumGrande && sel && auth;
 
   const enviar = async () => {
     if (!podeEnviar) return;
     setEnvio({ estado:"enviando", progresso:0 });
     try {
-      const payload = { tipo:"material", token, declaracao:true, podcast:null, quiz:null, flashcards:null };
+      const payload = { tipo:"material", idToken: auth.idToken, id: sel.id, declaracao:true, podcast:null, quiz:null, flashcards:null };
       if (arq.podcast)    payload.podcast    = { nome: arq.podcast.name,    base64: await readBase64(arq.podcast) };
       if (arq.quiz)       payload.quiz       = { nome: arq.quiz.name,       base64: await readBase64(arq.quiz) };
       if (arq.flashcards) payload.flashcards = { nome: arq.flashcards.name, base64: await readBase64(arq.flashcards) };
-      const res = await postMaterial(payload, (p) => setEnvio({ estado:"enviando", progresso:p }));
+      const res = await postComProgresso(payload, (p) => setEnvio({ estado:"enviando", progresso:p }));
       if (res && res.ok) setEnvio({ estado:"sucesso" });
       else setEnvio({ estado:"erro", msg: (res && res.erro) || "Não foi possível anexar o material." });
     } catch (e) {
@@ -154,8 +229,13 @@ function MaterialApp() {
 
   const Cabecalho = () => (
     <header style={{ background:C.azulEsc }}>
-      <div style={{ maxWidth:680, margin:"0 auto", padding:"9px 16px" }}>
-        <div style={{ height:42, backgroundImage:`url(${(window.__resources && window.__resources.logoStrip) || "assets/logo-strip.jpeg"})`, backgroundSize:"contain", backgroundRepeat:"no-repeat", backgroundPosition:"center" }} role="img" aria-label="Medicina UNIDAVI · NPCMed · SAM 2026" />
+      <div style={{ maxWidth:680, margin:"0 auto", padding:"9px 16px", display:"flex", alignItems:"center", gap:12 }}>
+        <div style={{ flex:1, height:42, backgroundImage:`url(${(window.__resources && window.__resources.logoStrip) || "assets/logo-strip.jpeg"})`, backgroundSize:"contain", backgroundRepeat:"no-repeat", backgroundPosition:"left center" }} role="img" aria-label="Medicina UNIDAVI · NPCMed · SAM 2026" />
+        {auth && (
+          <button onClick={sair} title="Sair" style={{ display:"inline-flex", alignItems:"center", gap:6, background:"rgba(255,255,255,0.12)", border:"1px solid rgba(255,255,255,0.25)", color:"#fff", borderRadius:9, padding:"6px 11px", fontSize:12.5, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap" }}>
+            <LogOut size={14} color="#fff" /> Sair
+          </button>
+        )}
       </div>
     </header>
   );
@@ -166,62 +246,95 @@ function MaterialApp() {
       <Cabecalho />
       <div style={{ maxWidth:680, margin:"0 auto", padding:"22px 16px 60px" }}>
 
-        {estado === "semToken" && (
+        {auth && (
+          <div style={{ fontSize:13, color:C.cinza, marginBottom:16, display:"flex", alignItems:"center", gap:7, flexWrap:"wrap" }}>
+            <CheckCircle2 size={15} color={C.ok} /> Conectado como <strong style={{ color:C.tinta }}>{auth.email}</strong>
+          </div>
+        )}
+
+        {/* ---------- LOGIN ---------- */}
+        {fase === "login" && (
           <div style={card}>
-            <div style={{ display:"flex", gap:10, alignItems:"flex-start", color:C.tinta }}>
-              <AlertCircle size={20} color={C.erro} style={{ marginTop:2, flexShrink:0 }} />
-              <div>
-                <div style={{ fontSize:16, fontWeight:800, marginBottom:6 }}>Link sem identificação</div>
-                <div style={{ fontSize:14, lineHeight:1.55, color:C.cinza }}>Acesse esta página pelo <strong>link pessoal</strong> enviado por e-mail após a sua submissão — ele inclui o seu código de acesso.</div>
-              </div>
-            </div>
+            <h1 style={{ fontSize:22, fontWeight:800, color:C.azul, letterSpacing:-0.3, margin:"0 0 8px" }}>Adicionar material</h1>
+            <p style={{ fontSize:14.5, color:C.cinza, lineHeight:1.55, margin:"0 0 20px" }}>Anexe podcast, quiz e flashcards ao seu trabalho. Entre com a sua conta institucional <strong>@{HD_DOMINIO}</strong> — a mesma usada na submissão.</p>
+            <BotaoGoogle onCredential={onCredential} />
           </div>
         )}
 
-        {estado === "carregando" && (
+        {/* ---------- CARREGANDO ---------- */}
+        {fase === "carregando" && (
           <div style={{ ...card, display:"flex", alignItems:"center", gap:10, color:C.azulEsc }}>
-            <Loader2 size={18} color={C.ciano} className="girando" /> Carregando o seu trabalho…
+            <Loader2 size={18} color={C.ciano} className="girando" /> Verificando os seus trabalhos…
           </div>
         )}
 
-        {estado === "erro" && (
+        {/* ---------- ERRO DE AUTENTICAÇÃO / SEM TRABALHO ---------- */}
+        {fase === "erroAuth" && (
           <div style={card}>
             <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
               <AlertCircle size={20} color={C.erro} style={{ marginTop:2, flexShrink:0 }} />
               <div style={{ flex:1 }}>
-                <div style={{ fontSize:16, fontWeight:800, marginBottom:6 }}>Não foi possível abrir</div>
+                <div style={{ fontSize:16, fontWeight:800, marginBottom:6 }}>Não foi possível continuar</div>
                 <div style={{ fontSize:14, lineHeight:1.55, color:C.cinza }}>{erroMsg}</div>
-                <button onClick={carregar} style={{ marginTop:12, border:"1px solid #E3EAF2", background:"#fff", color:C.azul, borderRadius:9, padding:"8px 16px", fontSize:13, fontWeight:700, cursor:"pointer" }}>Tentar de novo</button>
+                <button onClick={sair} style={{ marginTop:14, border:"1px solid #E3EAF2", background:"#fff", color:C.azul, borderRadius:9, padding:"8px 16px", fontSize:13, fontWeight:700, cursor:"pointer" }}>Entrar com outra conta</button>
               </div>
             </div>
           </div>
         )}
 
-        {estado === "pronto" && trabalho && (
+        {/* ---------- LISTA (2+ trabalhos) ---------- */}
+        {fase === "lista" && (
           <>
-            {/* confirmação do trabalho (somente leitura) */}
+            <h1 style={{ fontSize:21, fontWeight:800, color:C.azul, letterSpacing:-0.3, margin:"0 0 6px" }}>Escolha o trabalho</h1>
+            <p style={{ fontSize:14, color:C.cinza, lineHeight:1.5, margin:"0 0 16px" }}>Você tem mais de um trabalho. Selecione a qual deseja anexar material.</p>
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              {trabalhos.map((t) => (
+                <button key={t.id} onClick={() => { setSel(t); setArq({ podcast:null, quiz:null, flashcards:null }); setDeclaracao(false); setFase("form"); }}
+                  style={{ ...card, padding:16, display:"flex", gap:12, alignItems:"center", textAlign:"left", cursor:"pointer", width:"100%" }}>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:15, fontWeight:700, color:C.tinta, lineHeight:1.3 }}>{t.titulo || t.id}</div>
+                    {t.autor && <div style={{ fontSize:13, color:C.cinza, marginTop:4 }}>{t.autor}</div>}
+                    {t.material && <div style={{ fontSize:12, color:C.ok, marginTop:6, display:"inline-flex", alignItems:"center", gap:4 }}><Check size={12} color={C.ok} /> já tem material</div>}
+                  </div>
+                  <ChevronRight size={18} color={C.ciano} />
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* ---------- FORMULÁRIO ---------- */}
+        {fase === "form" && sel && (
+          <>
+            {trabalhos.length > 1 && (
+              <button onClick={() => { setSel(null); setFase("lista"); }} style={{ display:"inline-flex", alignItems:"center", gap:6, background:"transparent", border:"none", color:C.azul, fontSize:13, fontWeight:700, cursor:"pointer", padding:0, marginBottom:12 }}>
+                <MIco size={15} color={C.azul}><path d="m15 18-6-6 6-6"/></MIco> Trocar de trabalho
+              </button>
+            )}
+
+            {/* trabalho selecionado (somente leitura) */}
             <div style={{ ...card, marginBottom:16 }}>
               <div style={{ fontSize:11, letterSpacing:1.4, fontWeight:800, color:C.ciano, textTransform:"uppercase", marginBottom:8 }}>Seu trabalho</div>
-              <div style={{ fontSize:18, fontWeight:800, color:C.tinta, lineHeight:1.3 }}>{trabalho.titulo || "—"}</div>
-              {trabalho.autor && <div style={{ fontSize:14, color:C.cinza, marginTop:6 }}>{trabalho.autor}</div>}
-              {trabalho.material && (
+              <div style={{ fontSize:18, fontWeight:800, color:C.tinta, lineHeight:1.3 }}>{sel.titulo || "—"}</div>
+              {sel.autor && <div style={{ fontSize:14, color:C.cinza, marginTop:6 }}>{sel.autor}</div>}
+              {sel.material && (
                 <div style={{ marginTop:14, background:C.cianoClaro, border:`1px solid ${C.ciano}44`, borderRadius:10, padding:"10px 13px", fontSize:13, color:C.azulEsc, display:"flex", gap:8, alignItems:"center" }}>
                   <CheckCircle2 size={16} color={C.ciano} /><span>Você já anexou material a este trabalho. Enviar novamente <strong>substitui</strong> o anterior.</span>
                 </div>
               )}
             </div>
 
-            <h1 style={{ fontSize:22, fontWeight:800, color:C.azul, letterSpacing:-0.3, margin:"0 0 6px" }}>Adicionar material</h1>
+            <h2 style={{ fontSize:20, fontWeight:800, color:C.azul, letterSpacing:-0.3, margin:"0 0 6px" }}>Adicionar material</h2>
             <p style={{ fontSize:14.5, color:C.cinza, lineHeight:1.55, margin:"0 0 18px" }}>Anexe o que tiver — cada item é opcional, e você pode voltar depois para incluir o restante.</p>
 
             <LinhaUpload ico={Headphones} titulo="Podcast" descricao="arquivo .mp3"
-              accept="audio/mpeg,.mp3" arquivo={arq.podcast} jaTem={trabalho.material && !!trabalho.material.audioUrl}
+              accept="audio/mpeg,.mp3" arquivo={arq.podcast} jaTem={sel.material && !!sel.material.audioUrl}
               onPick={(f) => setArq((a) => ({ ...a, podcast:f }))} onClear={() => setArq((a) => ({ ...a, podcast:null }))} />
             <LinhaUpload ico={ListChecks} titulo="Quiz" descricao="arquivo .txt"
-              accept="text/plain,.txt" arquivo={arq.quiz} jaTem={trabalho.material && !!trabalho.material.quizText}
+              accept="text/plain,.txt" arquivo={arq.quiz} jaTem={sel.material && !!sel.material.quizText}
               onPick={(f) => setArq((a) => ({ ...a, quiz:f }))} onClear={() => setArq((a) => ({ ...a, quiz:null }))} />
             <LinhaUpload ico={Layers} titulo="Flashcards" descricao="arquivo .csv"
-              accept="text/csv,.csv" arquivo={arq.flashcards} jaTem={trabalho.material && !!trabalho.material.flashcardsText}
+              accept="text/csv,.csv" arquivo={arq.flashcards} jaTem={sel.material && !!sel.material.flashcardsText}
               onPick={(f) => setArq((a) => ({ ...a, flashcards:f }))} onClear={() => setArq((a) => ({ ...a, flashcards:null }))} />
 
             {algumGrande && (
@@ -261,7 +374,7 @@ function MaterialApp() {
               <div style={{ width:56, height:56, borderRadius:"50%", background:`${C.ok}1A`, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}><CheckCircle2 size={32} color={C.ok} /></div>
               <div style={{ fontWeight:800, fontSize:18, marginBottom:8 }}>Material anexado!</div>
               <div style={{ fontSize:14, color:C.cinza, lineHeight:1.5 }}>O material foi anexado ao seu trabalho. Você pode fechar esta página ou voltar depois para incluir mais.</div>
-              <button onClick={() => { setEnvio(null); setArq({ podcast:null, quiz:null, flashcards:null }); setDeclaracao(false); carregar(); }} style={{ background:C.azul, color:"#fff", border:"none", borderRadius:10, padding:"11px 22px", fontSize:14, fontWeight:700, cursor:"pointer", marginTop:16 }}>Concluir</button>
+              <button onClick={() => { setEnvio(null); setArq({ podcast:null, quiz:null, flashcards:null }); setDeclaracao(false); if (auth) buscarTrabalhos(auth.idToken, sel && sel.id); }} style={{ background:C.azul, color:"#fff", border:"none", borderRadius:10, padding:"11px 22px", fontSize:14, fontWeight:700, cursor:"pointer", marginTop:16 }}>Concluir</button>
             </>)}
             {envio.estado === "erro" && (<>
               <div style={{ width:56, height:56, borderRadius:"50%", background:"#FBEAE8", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}><X size={30} color={C.erro} /></div>
