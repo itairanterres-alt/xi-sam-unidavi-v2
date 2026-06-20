@@ -651,7 +651,6 @@ function SubmissaoApp() {
 
   return (
     <div style={{ minHeight:"100vh", background:C.papel, fontFamily:"'IBM Plex Sans', system-ui, sans-serif", color:C.tinta }}>
-      <div style={{ background:C.ciano, color:"#fff", fontSize:12, textAlign:"center", padding:"5px 12px", fontWeight:600 }}>VERSÃO DE TESTE · as submissões são gravadas de verdade</div>
       <header style={{ background:"#fff", borderBottom:"1px solid #E3EAF2" }}>
         <div style={{ background:C.azulEsc }}>
           <div style={{ maxWidth:1280, margin:"0 auto", padding:"9px 16px" }}>
@@ -667,10 +666,13 @@ function SubmissaoApp() {
               </button>
             );
           })}
-          {/* navegação para a página de material (login acontece lá) */}
-          <a href="material.html" style={{ marginLeft:"auto", display:"inline-flex", alignItems:"center", gap:7, textDecoration:"none", background:C.cianoClaro, color:C.azul, border:`1px solid ${C.ciano}55`, borderRadius:999, padding:"7px 14px", fontSize:13, fontWeight:700, whiteSpace:"nowrap" }}>
-            <Headphones size={15} color={C.azul}/> Adicionar material
-          </a>
+          {/* navegação para a página de material (login acontece lá) —
+              só 8ª fase tem material (podcast/quiz/flashcards); 7ª não tem */}
+          {ehFase8 && (
+            <a href="material.html" style={{ marginLeft:"auto", display:"inline-flex", alignItems:"center", gap:7, textDecoration:"none", background:C.cianoClaro, color:C.azul, border:`1px solid ${C.ciano}55`, borderRadius:999, padding:"7px 14px", fontSize:13, fontWeight:700, whiteSpace:"nowrap" }}>
+              <Headphones size={15} color={C.azul}/> Adicionar material
+            </a>
+          )}
         </div>
       </header>
 
@@ -711,8 +713,21 @@ function SubmissaoApp() {
           <div style={grupo}><label style={label}>Título</label><textarea rows={2} style={campo} value={f.titulo} onChange={set("titulo")}/></div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
             <div style={grupo}><label style={label}>Fase</label><select style={campo} value={f.fase} onChange={(e)=>setF({...f,fase:Number(e.target.value)})}><option value={7}>7ª fase (pôster do projeto)</option><option value={8}>8ª fase (resumo)</option></select></div>
-            <div style={grupo}><label style={label}>Área médica</label><select style={campo} value={f.area} onChange={set("area")}>{AREAS.map(d=><option key={d}>{d}</option>)}</select></div>
+            <div style={grupo}><label style={label}>Área médica</label>
+              <select style={campo} value={AREAS.includes(f.area) ? f.area : "__outra__"}
+                onChange={(e)=>setF({...f, area: e.target.value==="__outra__" ? "" : e.target.value})}>
+                {AREAS.map(d=><option key={d}>{d}</option>)}
+                <option value="__outra__">Outra (especificar)…</option>
+              </select>
+            </div>
           </div>
+          {!AREAS.includes(f.area) && (
+            <div style={grupo}>
+              <label style={label}>Qual área? <span style={{ fontWeight:600, textTransform:"none", letterSpacing:0, color:C.cinza }}>(especifique)</span></label>
+              <input style={campo} value={f.area} onChange={set("area")} placeholder="Ex.: Medicina Legal, Oftalmologia, Radiologia…" autoFocus/>
+              <div style={{ fontSize:11.5, color:C.cinza, marginTop:5, lineHeight:1.45 }}>Digite o nome da área como deve aparecer no programa e nos anais.</div>
+            </div>
+          )}
           {!ehFase8 && <>
             <div style={grupo}><label style={label}>Desenho do estudo</label><select style={campo} value={f.desenho} onChange={set("desenho")}>{DESENHOS.map(d=><option key={d}>{d}</option>)}</select></div>
             <div style={{ background:C.cianoClaro, borderRadius:9, padding:"10px 12px", marginBottom:14, fontSize:12.5, color:C.azulEsc, display:"flex", gap:8 }}>
@@ -843,7 +858,7 @@ function SubmissaoApp() {
               <div style={{ width:56, height:56, borderRadius:"50%", background:`${C.ciano}1A`, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}><CheckCircle2 size={32} color={C.ciano}/></div>
               <div style={{ fontWeight:800, fontSize:18, marginBottom:8 }}>{edicao ? "Atualização recebida!" : "Trabalho recebido!"}</div>
               <div style={{ fontSize:14, color:C.cinza, lineHeight:1.5 }}>Código <strong style={{ color:C.tinta }}>{resultado.id}</strong>. {edicao ? "A nova versão substitui a anterior e segue para a curadoria." : "Enviamos um e-mail de confirmação com o link para revisar ou ajustar."}</div>
-              {resultado.token && <MaterialLinkBox url={materialUrl(resultado.token)} />}
+              {ehFase8 && resultado.token && <MaterialLinkBox url={materialUrl(resultado.token)} />}
             </>) : (<>
               <div style={{ width:56, height:56, borderRadius:"50%", background:"#FBEAE8", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}><X size={30} color={C.erro}/></div>
               <div style={{ fontWeight:800, fontSize:18, marginBottom:8 }}>Não foi possível enviar</div>
