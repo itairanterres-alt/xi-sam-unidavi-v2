@@ -328,7 +328,10 @@ function MaterialApp() {
     if (!window.SAM_DEMO) return;
     const idToken = "demo-token";
     setAuth({ idToken, email:"demo@unidavi.edu.br", nome:"Conta de teste" });
-    buscarTrabalhos(idToken);
+    buscarTrabalhos(idToken).then(() => {
+      // p/ prints do manual: semeia o quiz já reconhecido (estado de pré-visualização)
+      if (Array.isArray(window.SAM_DEMO_QUIZ) && window.SAM_DEMO_QUIZ.length) setQuizQuestoes(window.SAM_DEMO_QUIZ);
+    });
   }, []);
 
   /* busca os trabalhos do e-mail logado; keepId mantém a seleção após reenvio */
