@@ -1220,6 +1220,7 @@ function MaterialSuplementar({ t }) {
 
 function TrabalhoLeitura({ t }) {
   const cor = AREA_COR[t.area] || C.azul;
+  const [apreciarAberto, setApreciarAberto] = useState(false);
   const fotoUrl = t.foto_autores_url || t.foto_autores_dataUrl;
   const F = figsPorSecao(t);
   const badge = { fontSize:12, fontWeight:700, padding:"4px 11px", borderRadius:999, background:"rgba(255,255,255,0.18)", border:"1px solid rgba(255,255,255,0.34)", whiteSpace:"nowrap" };
@@ -1282,10 +1283,22 @@ function TrabalhoLeitura({ t }) {
           {_palavrasArr(t).map((p) => <span key={p} style={{ fontSize:13, background:C.papel, border:"1px solid #DCE5EE", borderRadius:999, padding:"6px 13px", color:C.cinza }}>{p}</span>)}
         </div>
       </div>
+      {/* CTA — Apreciar este trabalho (7ª e 8ª fase) */}
+      <div style={{ margin:"4px 22px 8px", padding:"18px 18px", borderRadius:14, background:C.cianoClaro, border:`1px solid ${C.ciano}33`, display:"flex", gap:14, alignItems:"center", flexWrap:"wrap" }}>
+        <div style={{ flex:1, minWidth:180 }}>
+          <div style={{ fontWeight:800, color:C.azul, fontSize:15.5 }}>Aprecie este trabalho</div>
+          <div style={{ fontSize:13, color:C.cinza, marginTop:3, lineHeight:1.4 }}>Sua opinião ajuda os autores e a banca. Leva poucos minutos.</div>
+        </div>
+        <button onClick={() => setApreciarAberto(true)} className="card-link"
+          style={{ display:"inline-flex", alignItems:"center", gap:8, background:C.azul, color:"#fff", border:"none", borderRadius:11, padding:"12px 18px", fontWeight:700, fontSize:14.5, cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap" }}>
+          <Award size={18} color="#fff" /> Apreciar este trabalho
+        </button>
+      </div>
       <div style={{ borderTop:"1px solid #EEF2F6", padding:"18px 22px 30px", textAlign:"center" }}>
         <div style={{ fontSize:15, fontWeight:800, color:C.azul, letterSpacing:0.5 }}>SAM · MEDICINA UNIDAVI</div>
         <div style={{ fontSize:12, color:C.cinza, marginTop:4 }}>XI Semana Acadêmica da Medicina · 2026</div>
       </div>
+      {apreciarAberto && <FluxoApreciacao t={t} onClose={() => setApreciarAberto(false)} />}
     </div>
   );
 }

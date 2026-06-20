@@ -55,6 +55,15 @@ const Loader2     = (p) => <SIco {...p}><path d="M21 12a9 9 0 1 1-6.219-8.56"/><
 const AlertTriangle=(p) => <SIco {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></SIco>;
 const X           = (p) => <SIco {...p}><path d="M18 6 6 18M6 6l12 12"/></SIco>;
 const Lock        = (p) => <SIco {...p}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></SIco>;
+const MessageSquare=(p) => <SIco {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></SIco>;
+const ClipboardList=(p) => <SIco {...p}><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></SIco>;
+const GraduationCap=(p)=> <SIco {...p}><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1 2 2.5 6 2.5s6-1.5 6-2.5v-5"/></SIco>;
+const UserRound   = (p) => <SIco {...p}><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></SIco>;
+const Users       = (p) => <SIco {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></SIco>;
+const Mail        = (p) => <SIco {...p}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></SIco>;
+const ChevronDown = (p) => <SIco {...p}><path d="m6 9 6 6 6-6"/></SIco>;
+const RotateCw    = (p) => <SIco {...p}><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></SIco>;
+const Download    = (p) => <SIco {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></SIco>;
 
 /* ---------- estilos base ---------- */
 const campo = { width:"100%", padding:"10px 12px", border:"1px solid #D6DFE9", borderRadius:10, fontSize:14, color:C.tinta, fontFamily:"inherit", background:"#fff", boxSizing:"border-box" };
@@ -282,9 +291,10 @@ function Ficha({ t, email, senha, onVoltar, onAtualizar }) {
 }
 
 /* ============================ PAINEL ============================ */
-function Painel({ email, trabalhos, onSair, onAbrir, onAtualizar }) {
+function Painel({ email, senha, trabalhos, onSair, onAbrir, onAtualizar }) {
   const [filtro, setFiltro] = useState("todos");
   const [busca, setBusca] = useState("");
+  const [aba, setAba] = useState("trabalhos");
 
   const cont = useMemo(() => {
     const c = { enviado:0, publicado:0, ajuste:0 };
@@ -328,7 +338,23 @@ function Painel({ email, trabalhos, onSair, onAbrir, onAtualizar }) {
         </div>
       </header>
 
-      <div style={{ maxWidth:1100, margin:"0 auto", padding:"24px 16px 60px" }}>
+      <div style={{ maxWidth:1100, margin:"0 auto", padding:"20px 16px 60px" }}>
+        {/* abas */}
+        <div style={{ display:"flex", gap:8, marginBottom:20, borderBottom:"1px solid #E3EAF2" }}>
+          {[["trabalhos", ClipboardList, "Trabalhos"], ["apreciacoes", MessageSquare, "Apreciações"]].map(([val, Ico, label]) => {
+            const on = aba === val;
+            return (
+              <button key={val} onClick={() => setAba(val)}
+                style={{ display:"inline-flex", alignItems:"center", gap:8, border:"none", background:"transparent", cursor:"pointer", fontFamily:"inherit", fontSize:14.5, fontWeight:700, color:on ? C.azul : C.cinza, padding:"10px 6px", marginBottom:-1, borderBottom:`3px solid ${on ? C.azul : "transparent"}` }}>
+                <Ico size={17} color={on ? C.azul : C.cinza} /> {label}
+              </button>
+            );
+          })}
+        </div>
+
+        {aba === "apreciacoes" && <ApreciacoesPanel email={email} senha={senha} />}
+
+        {aba === "trabalhos" && (<>
         <div style={{ display:"flex", alignItems:"center", gap:7, fontSize:12.5, color:C.cinza, background:C.cianoClaro, borderRadius:10, padding:"9px 13px", marginBottom:18 }}>
           <Lock size={15} color={C.azul} /> Curadoria é <strong style={{ color:C.azulEsc }}>gestão editorial</strong> — conferência de completude. O mérito já foi avaliado pela banca de TC.
         </div>
@@ -376,6 +402,227 @@ function Painel({ email, trabalhos, onSair, onAbrir, onAtualizar }) {
             })}
           </div>
         )}
+        </>)}
+      </div>
+    </div>
+  );
+}
+
+/* ============================ APRECIAÇÕES ============================ */
+/* Lê as apreciações enviadas pelo público/banca (GET action=apreciacoes,
+   reusa e-mail + senha da curadoria). Agrupa por trabalho. */
+const AP_TIPO = {
+  docente: { label:"Docente / Banca", Ico:GraduationCap, cor:C.azul },
+  aluno:   { label:"Aluno de medicina", Ico:UserRound, cor:C.ciano },
+  outro:   { label:"Outro", Ico:Users, cor:C.cinza },
+};
+function _apRespObj(a) {
+  let r = a && a.respostas;
+  if (typeof r === "string") { try { r = JSON.parse(r); } catch (e) { r = null; } }
+  return r || {};
+}
+function _apChip(resposta, valor) {
+  // 5 = verde, 1 = vermelho (intensidade da resposta). null → cinza.
+  const ramp = ["#C0392B", "#C16A2E", "#7E8794", "#3E9468", "#1F8A5B"];
+  const cor = valor ? (ramp[valor - 1] || C.cinza) : C.cinza;
+  return (
+    <span style={{ fontSize:11.5, fontWeight:700, color:"#fff", background:cor, borderRadius:999, padding:"3px 10px", whiteSpace:"nowrap" }}>
+      {resposta || "—"}
+    </span>
+  );
+}
+function ApreciacaoCard({ a }) {
+  const meta = AP_TIPO[a.tipo_apreciador] || AP_TIPO.outro;
+  const r = _apRespObj(a);
+  const itens = Array.isArray(r.itens) ? r.itens : [];
+  const Ico = meta.Ico;
+  return (
+    <div style={{ background:"#fff", border:"1px solid #E3EAF2", borderRadius:12, padding:"14px 16px", borderLeft:`4px solid ${meta.cor}` }}>
+      <div style={{ display:"flex", alignItems:"center", gap:9, flexWrap:"wrap", marginBottom:10 }}>
+        <span style={{ display:"inline-flex", alignItems:"center", gap:6, fontSize:12.5, fontWeight:800, color:meta.cor }}>
+          <Ico size={15} color={meta.cor} /> {meta.label}
+        </span>
+        {a.tipo_tc && <span style={{ fontSize:11, fontWeight:700, color:C.cinza, background:C.cinzaClaro, borderRadius:999, padding:"2px 9px" }}>{a.tipo_tc}</span>}
+        {a.email_apreciador ? (
+          <span style={{ display:"inline-flex", alignItems:"center", gap:5, fontSize:12, color:C.cinza, marginLeft:"auto" }}>
+            <Mail size={13} color={C.cinza} /> {a.email_apreciador}
+          </span>
+        ) : a.nome_apreciador ? (
+          <span style={{ fontSize:12, color:C.cinza, marginLeft:"auto" }}>{a.nome_apreciador}</span>
+        ) : <span style={{ fontSize:11.5, color:"#9AA8B8", marginLeft:"auto", fontStyle:"italic" }}>anônimo</span>}
+      </div>
+
+      {/* avaliação global + recomendação em destaque */}
+      {(r.global || r.recomenda) && (
+        <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:itens.length ? 12 : 4 }}>
+          {r.global && (
+            <div style={{ display:"flex", alignItems:"center", gap:8, background:C.papel, borderRadius:9, padding:"6px 10px" }}>
+              <span style={{ fontSize:11.5, color:C.cinza, fontWeight:600 }}>Global</span> {_apChip(r.global.resposta, r.global.valor)}
+            </div>
+          )}
+          {r.recomenda && (
+            <div style={{ display:"flex", alignItems:"center", gap:8, background:C.papel, borderRadius:9, padding:"6px 10px" }}>
+              <span style={{ fontSize:11.5, color:C.cinza, fontWeight:600 }}>Premiação</span>
+              <span style={{ fontSize:11.5, fontWeight:700, color:C.tinta }}>{r.recomenda.resposta || "—"}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* respostas detalhadas */}
+      {itens.length > 0 && (
+        <div style={{ display:"flex", flexDirection:"column", gap:0 }}>
+          {(() => {
+            let grupoAtual = null;
+            return itens.map((it, i) => {
+              const mostraGrupo = it.grupo && it.grupo !== grupoAtual;
+              grupoAtual = it.grupo || grupoAtual;
+              return (
+                <div key={i}>
+                  {mostraGrupo && <div style={{ fontSize:10.5, fontWeight:800, color:C.ciano, textTransform:"uppercase", letterSpacing:0.8, margin:"8px 0 4px" }}>{it.grupo}</div>}
+                  <div style={{ display:"flex", alignItems:"center", gap:10, padding:"5px 0", borderTop: i && !mostraGrupo ? "1px solid #F2F5F8" : "none" }}>
+                    <span style={{ flex:1, fontSize:12.5, color:C.tinta, lineHeight:1.35 }}>{it.texto}</span>
+                    {_apChip(it.resposta, it.valor)}
+                  </div>
+                </div>
+              );
+            });
+          })()}
+        </div>
+      )}
+
+      {/* comentários abertos */}
+      {a.comentario_aberto && String(a.comentario_aberto).trim() && (
+        <div style={{ marginTop:12, background:C.cianoClaro, borderRadius:10, padding:"10px 13px", fontSize:13, color:C.tinta, lineHeight:1.5, whiteSpace:"pre-wrap" }}>{a.comentario_aberto}</div>
+      )}
+    </div>
+  );
+}
+function GrupoApreciacoes({ g }) {
+  const [aberto, setAberto] = useState(false);
+  const globais = g.lista.map((a) => { const r = _apRespObj(a); return r.global && r.global.valor; }).filter((v) => v != null);
+  const media = globais.length ? (globais.reduce((s, v) => s + v, 0) / globais.length) : null;
+  return (
+    <div style={{ background:"#fff", border:"1px solid #E3EAF2", borderRadius:14, overflow:"hidden" }}>
+      <button onClick={() => setAberto((x) => !x)} style={{ width:"100%", textAlign:"left", background:"transparent", border:"none", cursor:"pointer", fontFamily:"inherit", padding:"15px 16px", display:"flex", alignItems:"center", gap:12 }}>
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
+            <span style={{ fontSize:11.5, fontWeight:800, color:C.azul }}>{g.id}</span>
+            {g.fase ? <span style={{ fontSize:11.5, color:C.cinza }}>· {g.fase}ª fase</span> : null}
+          </div>
+          <div style={{ fontSize:14.5, fontWeight:700, color:C.tinta, lineHeight:1.3 }}>{g.titulo}</div>
+        </div>
+        <div style={{ display:"flex", alignItems:"center", gap:14, flexShrink:0 }}>
+          <div style={{ textAlign:"center" }}>
+            <div style={{ fontSize:19, fontWeight:800, color:C.azul, lineHeight:1 }}>{g.lista.length}</div>
+            <div style={{ fontSize:10.5, color:C.cinza, fontWeight:600 }}>{g.lista.length === 1 ? "apreciação" : "apreciações"}</div>
+          </div>
+          {media != null && (
+            <div style={{ textAlign:"center" }}>
+              <div style={{ fontSize:19, fontWeight:800, color:C.verde, lineHeight:1 }}>{media.toFixed(1)}</div>
+              <div style={{ fontSize:10.5, color:C.cinza, fontWeight:600 }}>global /5</div>
+            </div>
+          )}
+          <ChevronDown size={20} color={C.cinza} style={{ transform:aberto ? "rotate(180deg)" : "none", transition:"transform .15s" }} />
+        </div>
+      </button>
+      {aberto && (
+        <div style={{ borderTop:"1px solid #EEF2F6", background:C.papel, padding:"14px 16px", display:"flex", flexDirection:"column", gap:12 }}>
+          {g.lista.map((a, i) => <ApreciacaoCard key={i} a={a} />)}
+        </div>
+      )}
+    </div>
+  );
+}
+/* monta e baixa um CSV (uma linha por resposta de cada apreciação) — achata
+   o respostas_json em colunas legíveis. Abre direto no Excel/Sheets. */
+function _csvCell(v) {
+  const s = v == null ? "" : String(v);
+  return /[";,\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function baixarApreciacoesCSV(dados) {
+  const cab = ["criado_em", "trabalho_id", "trabalho_titulo", "fase", "tipo_apreciador",
+    "email_apreciador", "nome_apreciador", "tipo_tc", "grupo", "pergunta", "resposta", "valor", "comentario_aberto"];
+  const linhas = [cab];
+  (dados || []).forEach((a) => {
+    const r = _apRespObj(a);
+    const base = [a.criado_em || "", a.trabalho_id || "", a.trabalho_titulo || "", a.fase || "",
+      a.tipo_apreciador || "", a.email_apreciador || "", a.nome_apreciador || "", a.tipo_tc || ""];
+    const extras = [];
+    (Array.isArray(r.itens) ? r.itens : []).forEach((it) => extras.push({ grupo:it.grupo, p:it.texto, resp:it.resposta, val:it.valor }));
+    if (r.global) extras.push({ grupo:"Avaliação", p:"Avaliação global", resp:r.global.resposta, val:r.global.valor });
+    if (r.recomenda) extras.push({ grupo:"Avaliação", p:"Recomendaria para premiação/destaque", resp:r.recomenda.resposta, val:r.recomenda.valor });
+    if (extras.length === 0) extras.push({ grupo:"", p:"", resp:"", val:"" });
+    extras.forEach((ex, i) => {
+      linhas.push([...base, ex.grupo || "", ex.p || "", ex.resp || "", ex.val == null ? "" : ex.val,
+        i === 0 ? (a.comentario_aberto || "") : ""].map(_csvCell));
+    });
+  });
+  const csv = "\uFEFF" + linhas.map((l) => l.join(";")).join("\r\n"); // BOM + ; p/ Excel pt-BR
+  const blob = new Blob([csv], { type:"text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const hoje = new Date().toISOString().slice(0, 10);
+  a.href = url; a.download = "apreciacoes-sam-" + hoje + ".csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+function ApreciacoesPanel({ email, senha }) {
+  const [status, setStatus] = useState("carregando"); // carregando | ok | erro
+  const [dados, setDados] = useState([]);
+
+  const buscar = () => {
+    setStatus("carregando");
+    fetch(API_URL + "?action=apreciacoes&email=" + encodeURIComponent(email) + "&senha=" + encodeURIComponent(senha || ""))
+      .then((r) => r.json())
+      .then((res) => {
+        if (!res || res.ok === false) throw new Error(res && res.erro);
+        const arr = res.apreciacoes || res.lista || res.dados || [];
+        setDados(Array.isArray(arr) ? arr : []);
+        setStatus("ok");
+      })
+      .catch(() => setStatus("erro"));
+  };
+  useEffect(buscar, []);
+
+  const grupos = useMemo(() => {
+    const m = new Map();
+    (dados || []).forEach((a) => {
+      const id = a.trabalho_id || a.trabalhoId || "—";
+      if (!m.has(id)) m.set(id, { id, titulo:a.trabalho_titulo || a.titulo || id, fase:a.fase, lista:[] });
+      m.get(id).lista.push(a);
+    });
+    return [...m.values()].sort((x, y) => y.lista.length - x.lista.length);
+  }, [dados]);
+
+  if (status === "carregando") return (
+    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10, color:C.cinza, fontSize:14, padding:"60px 20px" }}>
+      <Loader2 size={18} className="girando" /> Carregando apreciações…
+    </div>
+  );
+  if (status === "erro") return (
+    <div style={{ textAlign:"center", color:C.cinza, padding:"50px 20px", fontSize:14 }}>
+      <AlertTriangle size={26} color={C.ambar} style={{ margin:"0 auto 12px" }} />
+      <div style={{ marginBottom:14 }}>Não foi possível carregar as apreciações agora.</div>
+      <button onClick={buscar} style={{ display:"inline-flex", alignItems:"center", gap:7, border:"1px solid #E3EAF2", background:"#fff", color:C.azul, borderRadius:10, padding:"9px 16px", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}><RotateCw size={14} color={C.azul} /> Tentar de novo</button>
+    </div>
+  );
+  if (grupos.length === 0) return (
+    <div style={{ textAlign:"center", color:C.cinza, padding:"60px 20px" }}>
+      <MessageSquare size={30} color="#C5D2E0" style={{ margin:"0 auto 14px" }} />
+      <div style={{ fontSize:14.5, lineHeight:1.5, maxWidth:320, margin:"0 auto" }}>Ainda não há apreciações enviadas. Elas aparecem aqui assim que o público e a banca avaliarem os trabalhos.</div>
+    </div>
+  );
+  const total = dados.length;
+  return (
+    <div>
+      <div style={{ display:"flex", alignItems:"center", gap:7, fontSize:12.5, color:C.cinza, background:C.cianoClaro, borderRadius:10, padding:"9px 13px", marginBottom:18 }}>
+        <MessageSquare size={15} color={C.azul} /> <strong style={{ color:C.azulEsc }}>{total}</strong> {total === 1 ? "apreciação recebida" : "apreciações recebidas"} em <strong style={{ color:C.azulEsc }}>{grupos.length}</strong> {grupos.length === 1 ? "trabalho" : "trabalhos"}.
+        <button onClick={buscar} title="Atualizar" style={{ marginLeft:"auto", display:"inline-flex", alignItems:"center", gap:6, border:"1px solid #D6E3EF", background:"#fff", color:C.azul, borderRadius:9, padding:"5px 11px", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}><RotateCw size={13} color={C.azul} /> Atualizar</button>
+        <button onClick={() => baixarApreciacoesCSV(dados)} title="Baixar todas as apreciações em CSV" style={{ display:"inline-flex", alignItems:"center", gap:6, border:"none", background:C.azul, color:"#fff", borderRadius:9, padding:"6px 12px", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}><Download size={13} color="#fff" /> Baixar CSV</button>
+      </div>
+      <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+        {grupos.map((g) => <GrupoApreciacoes key={g.id} g={g} />)}
       </div>
     </div>
   );
@@ -472,7 +719,7 @@ function CuradoriaApp() {
 
   if (aberto) return <Ficha t={aberto} email={sessao.email} senha={sessao.senha} onVoltar={()=>setAbertoId(null)} onAtualizar={(t)=>{ atualizar(t); setAbertoId(null); }} />;
 
-  return <Painel email={sessao.email} trabalhos={sessao.trabalhos} onSair={sair} onAbrir={setAbertoId} onAtualizar={atualizar} />;
+  return <Painel email={sessao.email} senha={sessao.senha} trabalhos={sessao.trabalhos} onSair={sair} onAbrir={setAbertoId} onAtualizar={atualizar} />;
 }
 
 if (typeof window !== "undefined") { window.SAM_CURADORIA = { CuradoriaApp, Ficha, Painel, Login }; }

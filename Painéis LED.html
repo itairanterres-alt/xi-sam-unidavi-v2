@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XI SAM 2026 · Painéis LED (384×768)</title>
+  <meta name="ext-resource-dependency" content="assets/logo-strip.jpeg" data-resource-id="logoStrip" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/html-to-image@1.11.11/dist/html-to-image.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js" crossorigin="anonymous"></script>
+  <style>
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    :root{ --navy:#023E88; --navy2:#01285A; --ink:#001A3D; }
+    html,body{ background:#0c1726; font-family:'IBM Plex Sans',system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+
+    /* ---------- PAINEL 384×768 ---------- */
+    .panel{
+      position:relative; width:384px; height:768px; overflow:hidden;
+      background:#022f5e;
+      border-top:6px solid var(--accent);
+      color:#fff; display:flex; flex-direction:column;
+      padding:20px 22px 18px;
+    }
+    .panel[data-tipo="poster"]{ background:#022f5e; }
+
+    /* ---------- CABEÇALHO ---------- */
+    .pHead{ position:relative; z-index:2; }
+    .brandRow{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .wm{ font-weight:800; font-size:21px; letter-spacing:.5px; line-height:1; display:inline-flex; align-items:baseline; }
+    .wm b{ color:#00ADEF; font-weight:800; margin-left:4px; }
+    .wm i{ font-style:normal; font-size:11px; color:#9db8d6; font-weight:700; margin-left:3px; transform:translateY(-6px); }
+    .ev{ font-size:8.5px; font-weight:700; letter-spacing:1.1px; color:#7f9bc0; text-align:right; max-width:170px; line-height:1.25; }
+
+    .typeBand{ margin-top:12px; padding-left:13px; position:relative; }
+    .typeBand::before{ content:""; position:absolute; left:0; top:2px; bottom:2px; width:4px; border-radius:3px; background:var(--accent); }
+    .bandTop{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .day{ font-size:15px; font-weight:700; letter-spacing:.6px; color:#cfe0f3; white-space:nowrap; }
+    .count{ white-space:nowrap; }
+    .count{ font-size:9.5px; font-weight:700; letter-spacing:.4px; color:#7f9bc0; text-transform:uppercase; }
+    .type{ font-size:25px; font-weight:800; letter-spacing:.2px; line-height:1.04; color:var(--accent); margin-top:4px; white-space:nowrap; }
+    .venue{ font-size:10.5px; font-weight:500; color:var(--accent); margin-top:5px; }
+
+    /* ---------- LISTA ---------- */
+    .pList{ position:relative; z-index:2; flex:1; min-height:0; margin-top:10px; display:flex; flex-direction:column; }
+    .item{ flex:1 1 0; min-height:0; overflow:hidden; display:flex; flex-direction:column; justify-content:center; gap:2px;
+      padding:6px 0; border-top:1px solid rgba(255,255,255,.10); }
+    .item:first-child{ border-top:none; }
+    .topline{ display:flex; align-items:center; gap:7px; flex-shrink:0; }
+    .time{ font-size:12px; font-weight:800; letter-spacing:.3px; color:var(--accent); min-width:46px; }
+    .panel[data-tipo="poster"] .time{ min-width:60px; }
+    .area{ font-size:8.5px; font-weight:700; letter-spacing:.3px; color:#fff; padding:2px 7px; border-radius:999px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:262px; }
+    .title{ font-size:12.5px; font-weight:600; line-height:1.2; color:#eef5fc; flex-shrink:0;
+      display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:var(--lines); overflow:hidden;
+      max-height:calc(1.2em * var(--lines)); text-wrap:pretty; }
+    .ap{ display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; color:#9db8d6; flex-shrink:0; }
+    .ap .dot{ width:4px; height:4px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+
+    /* ---------- RODAPÉ ---------- */
+    .pFoot{ position:relative; z-index:2; margin-top:10px; flex-shrink:0; }
+    .qrRow{ display:flex; gap:10px; }
+    .qrCard{ flex:1; display:flex; align-items:center; gap:9px; background:#fff; border-radius:11px; padding:7px 9px; }
+    .qrCard .qr{ width:48px; height:48px; image-rendering:pixelated; border-radius:3px; flex-shrink:0; }
+    .qrTxt{ display:flex; flex-direction:column; line-height:1.15; min-width:0; }
+    .qrTxt b{ font-size:11px; font-weight:800; color:#01285A; letter-spacing:.2px; }
+    .qrTxt span{ font-size:8px; font-weight:600; color:#5B6B7E; }
+    .logos{ display:block; width:100%; margin-top:10px; border-radius:6px; opacity:.96; }
+
+    /* ---------- GALERIA (revisão) ---------- */
+    .gallery{ display:flex; flex-wrap:wrap; gap:30px 26px; padding:40px; align-items:flex-start; }
+    .dayGroup{ display:flex; flex-direction:column; gap:12px; }
+    .dayGroup > .lbl{ color:#cfe0f3; font-size:13px; font-weight:700; letter-spacing:.5px; }
+    .pair{ display:flex; gap:18px; flex-wrap:wrap; }
+    .cardWrap{ display:flex; flex-direction:column; gap:8px; }
+    .cardWrap .cap{ color:#7f9bc0; font-size:11px; font-weight:600; }
+    .cardWrap .panel{ box-shadow:0 18px 50px rgba(0,0,0,.5); border-radius:6px; }
+    .topbar{ position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:14px;
+      background:#0a1422; border-bottom:1px solid rgba(255,255,255,.08); padding:14px 40px; }
+    .topbar h1{ color:#fff; font-size:15px; font-weight:700; }
+    .topbar .meta{ color:#7f9bc0; font-size:12px; font-weight:500; }
+    .btn{ margin-left:auto; background:#00ADEF; color:#fff; border:none; border-radius:8px; padding:9px 16px;
+      font-size:13px; font-weight:700; cursor:pointer; }
+    .btn:hover{ background:#0098d1; }
+    .btn:disabled{ opacity:.55; cursor:default; }
+    .dlStatus{ color:#9db8d6; font-size:12px; font-weight:600; min-width:120px; }
+    .cap{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .dl1{ background:rgba(255,255,255,.08); color:#cfe0f3; border:1px solid rgba(255,255,255,.16);
+      border-radius:6px; padding:4px 9px; font-size:10.5px; font-weight:700; cursor:pointer; white-space:nowrap; }
+    .dl1:hover{ background:rgba(0,173,239,.25); border-color:#00ADEF; }
+
+    /* ---------- MODO EXPORT (?only=N) ---------- */
+    body.export{ background:#fff; }
+    body.export .topbar, body.export .gallery{ display:none; }
+    body.export #stage{ display:block; }
+    #stage{ display:none; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>XI SAM 2026 · Painéis LED</h1>
+    <span class="meta">384 × 768 px · 2 painéis por dia (orais + pôsteres)</span>
+    <button id="dlAll" class="btn">⤓ Baixar todos (ZIP)</button>
+    <span id="dlStatus" class="dlStatus"></span>
+  </div>
+  <div class="gallery" id="gallery"></div>
+  <div id="stage"></div>
+
+  <script src="data.js"></script>
+  <script src="paineis.js"></script>
+  <script>
+    (function () {
+      const panels = window.SAM_PANELS();
+      const params = new URLSearchParams(location.search);
+      const only = params.get("only");
+
+      if (only !== null) {
+        // Modo export: renderiza só 1 painel no canto superior esquerdo.
+        document.body.classList.add("export");
+        const p = panels[Number(only)];
+        document.body.style.cssText = "margin:0;background:#000;";
+        document.getElementById("stage").innerHTML = p.html;
+        return;
+      }
+
+      // Helper de exportação: renderiza 1 painel offscreen a 384×768 e devolve dataURL PNG exato.
+      window.SAM_FILES = panels.map((p) => p.file);
+      window.exportPanel = async function (i) {
+        const p = panels[i];
+        const box = document.createElement("div");
+        box.style.cssText = "position:fixed;left:-10000px;top:0;width:384px;height:768px;";
+        box.innerHTML = p.html;
+        document.body.appendChild(box);
+        const node = box.firstElementChild;
+        try { await document.fonts.ready; } catch (e) {}
+        await new Promise((r) => setTimeout(r, 120));
+        const url = await window.htmlToImage.toPng(node, {
+          width: 384, height: 768, pixelRatio: 1, cacheBust: true,
+          style: { margin: "0" },
+        });
+        document.body.removeChild(box);
+        return url;
+      };
+
+      // Galeria de revisão: agrupa por dia
+      const g = document.getElementById("gallery");
+      const byDay = {};
+      panels.forEach((p) => { (byDay[p.dia] = byDay[p.dia] || []).push(p); });
+      Object.keys(byDay).forEach((dia) => {
+        const grp = document.createElement("div");
+        grp.className = "dayGroup";
+        grp.innerHTML = `<div class="lbl">${dia}</div>`;
+        const pair = document.createElement("div");
+        pair.className = "pair";
+        byDay[dia].forEach((p) => {
+          const w = document.createElement("div");
+          w.className = "cardWrap";
+          const cap = document.createElement("div");
+          cap.className = "cap";
+          const lbl = p.tipo === "oral" ? "Apresentações orais" : "Pôsteres";
+          cap.innerHTML = `<span>${lbl} · ${p.file}</span>`;
+          const dl = document.createElement("button");
+          dl.className = "dl1";
+          dl.textContent = "⤓ PNG";
+          dl.onclick = () => downloadOne(p.idx, dl);
+          cap.appendChild(dl);
+          w.appendChild(cap);
+          const host = document.createElement("div");
+          host.innerHTML = p.html;
+          w.appendChild(host.firstElementChild);
+          pair.appendChild(w);
+        });
+        grp.appendChild(pair);
+        g.appendChild(grp);
+      });
+
+      // ---- Download de PNG exato (384×768) ----
+      function dataURLtoBlob(u) {
+        const [head, b64] = u.split(",");
+        const mime = head.match(/:(.*?);/)[1];
+        const bin = atob(b64);
+        const arr = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        return new Blob([arr], { type: mime });
+      }
+      function triggerDownload(blob, name) {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      }
+      async function downloadOne(i, btn) {
+        const old = btn ? btn.textContent : null;
+        if (btn) { btn.disabled = true; btn.textContent = "…"; }
+        const url = await window.exportPanel(i);
+        triggerDownload(dataURLtoBlob(url), panels[i].file);
+        if (btn) { btn.disabled = false; btn.textContent = old; }
+      }
+      const dlAllBtn = document.getElementById("dlAll");
+      const dlStatus = document.getElementById("dlStatus");
+      dlAllBtn.onclick = async () => {
+        dlAllBtn.disabled = true;
+        const zip = new JSZip();
+        for (let i = 0; i < panels.length; i++) {
+          dlStatus.textContent = `Gerando ${i + 1}/${panels.length}…`;
+          const url = await window.exportPanel(i);
+          zip.file(panels[i].file, url.split(",")[1], { base64: true });
+        }
+        dlStatus.textContent = "Compactando…";
+        const blob = await zip.generateAsync({ type: "blob" });
+        triggerDownload(blob, "paineis-led_XI-SAM.zip");
+        dlStatus.textContent = "Pronto ✓";
+        dlAllBtn.disabled = false;
+      };
+    })();
+  </script>
+</body>
+</html>
