@@ -200,9 +200,10 @@ function Home() {
           <div style={{ fontSize:14, color:C.azul, fontWeight:700, whiteSpace:"nowrap" }}>{d.sci}</div>
         </div>
 
-        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:3 }}>
           <Users size={15} color={C.cinza} /><div style={{ fontWeight:700, color:C.cinza, fontSize:13 }}>Pôsteres expostos</div>
         </div>
+        <div style={{ fontSize:13, color:C.cinza, fontWeight:400, marginBottom:10, lineHeight:1.4 }}>Projetos de pesquisa da 7ª fase, apresentados presencialmente na sessão.</div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(260px, 1fr))", gap:10, marginBottom:30 }}>
           {d.posteres.map((p) => {
             const cor = AREA_COR[p.area] || C.cinza;
@@ -240,9 +241,10 @@ function Home() {
           </div>
         </div>
 
-        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:3 }}>
           <Mic size={15} color={C.cinza} /><div style={{ fontWeight:700, color:C.cinza, fontSize:13 }}>Apresentações orais</div>
         </div>
+        <div style={{ fontSize:13, color:C.cinza, fontWeight:400, marginBottom:10, lineHeight:1.4 }}>Trabalhos concluídos da 8ª fase, apresentados na íntegra nas sessões orais. Abra cada um para ler o resumo.</div>
         <div style={{ display:"flex", gap:6, marginBottom:12, flexWrap:"wrap" }}>
           <button onClick={() => setFiltro("Todos")} style={chip(filtro==="Todos", C.azul)}>Todas</button>
           {areasDoDia.map((a) => <button key={a} onClick={() => setFiltro(a)} style={chip(filtro===a, AREA_COR[a]||C.cinza)}>{a}</button>)}
