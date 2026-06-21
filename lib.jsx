@@ -247,47 +247,94 @@ function similaridadeNomes(a, b) {
   B.forEach((g) => { const n = mapa.get(g) || 0; if (n > 0) { inter++; mapa.set(g, n - 1); } });
   return (2 * inter) / (A.length + B.length);
 }
-const SAM_LIMIAR_NOME = 0.82; // ajustável
-function _autoresTexto(t) {
-  const a = Array.isArray(t.autores) ? t.autores.join(" ") : (t.autores || "");
-  return normalizaNome(a);
+/* Partículas de ligação (sobrenomes compostos) — ignoradas no casamento,
+   pois aparecem/somem livremente entre planilha e submissão. */
+const _PARTICULAS = new Set(["de","da","do","das","dos","e","del","la","las","los","van","von","di","du","den","ter"]);
+/* tokens RELEVANTES de um nome: minúsculo, sem acento, sem pontuação,
+   sem superscritos de afiliação (¹ ² …) e sem partículas. */
+function _tokensNome(s) {
+  return normalizaNome(s).split(" ").filter((t) => t && !_PARTICULAS.has(t));
+}
+/* Dois tokens são "o mesmo nome"? Aceita: igualdade; INICIAL ("j" ~ "joao");
+   e pequeno erro de digitação (Dice alto + comprimento parecido). */
+function _tkMatch(x, y) {
+  if (x === y) return true;
+  if (x.length === 1) return y.charAt(0) === x;   // inicial abreviada
+  if (y.length === 1) return x.charAt(0) === y;
+  if (Math.abs(x.length - y.length) <= 2 && similaridadeNomes(x, y) >= 0.85) return true;
+  return false;
+}
+/* Um NOME do programa é compatível com UM autor do trabalho?
+   Âncora no primeiro nome + o nome mais curto deve ser subconjunto do mais
+   longo (tolera nomes do meio ausentes, ordem preservada não é exigida).
+   Tolerante a acento, partícula, abreviação e erro de digitação. */
+function nomesCompativeis(progNome, autorNome) {
+  const A = _tokensNome(progNome), B = _tokensNome(autorNome);
+  if (!A.length || !B.length) return false;
+  // nomes de um único token relevante → exige conjunto idêntico (evita falsos)
+  if (A.length < 2 || B.length < 2) {
+    return A.length === B.length && A.every((t, i) => _tkMatch(t, B[i]));
+  }
+  if (!_tkMatch(A[0], B[0])) return false;                 // âncora: primeiro nome
+  const [men, mai] = A.length <= B.length ? [A, B] : [B, A];
+  const usados = new Array(mai.length).fill(false);
+  for (const t of men) {                                   // menor ⊆ maior (tokens distintos)
+    let achou = -1;
+    for (let i = 0; i < mai.length; i++) {
+      if (!usados[i] && _tkMatch(t, mai[i])) { achou = i; break; }
+    }
+    if (achou === -1) return false;
+    usados[achou] = true;
+  }
+  return true;
+}
+/* lista de autores de um trabalho, normalizada para array de nomes individuais */
+function _autoresLista(t) {
+  if (Array.isArray(t.autores)) return t.autores;
+  return String(t.autores || "").split(/[,;]/).map((s) => s.trim()).filter(Boolean);
+}
+/* remove marcas de afiliação (superscritos ¹²³, *, †, ‡, §, índices numéricos)
+   PRESERVANDO os acentos — é o nome “de exibição”. */
+const _MARCAS_AFIL = /[\u00B2\u00B3\u00B9\u2070-\u209F\u2020\u2021\u00A7\u00B6\*]/g;
+function nomeLimpoAutor(s) {
+  return String(s || "")
+    .replace(_MARCAS_AFIL, "")
+    .replace(/\s*\d+(?:\s*[,;]\s*\d+)*\s*$/g, "")   // índices numéricos ao final
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+/* Nome do apresentador para EXIBIR no programa: quando o trabalho está casado,
+   usa o nome COMO FOI SUBMETIDO (com acento), no lugar do nome da planilha.
+   Sem casamento, mantém o nome do programa. */
+function nomeApresentador(item, t) {
+  const fallback = (item && item.ap) || "";
+  if (!t) return fallback;
+  const autores = _autoresLista(t);
+  const match = autores.find((a) => nomesCompativeis(item.ap, a));
+  return nomeLimpoAutor(match || autores[0] || fallback) || fallback;
 }
 /* Casa um item do PROGRAMA ({ap, id?}) com um trabalho liberado.
-   Retorna o trabalho ou null. Ambiguidade não se chuta. */
+   Retorna o trabalho ou null. Ambiguidade entre trabalhos distintos não se chuta. */
 function casarTrabalho(item, lista) {
   if (!item || !Array.isArray(lista) || !lista.length) return null;
-  // 1) override manual por id
+  // 1) override manual por id (vence tudo)
   if (item.id) return trabalhoNaLista(lista, item.id) || null;
-  const nome = normalizaNome(item.ap);
-  if (!nome) return null;
-  const tokens = nome.split(" ").filter(Boolean);
-  // 2) todos os tokens do apresentador contidos nos autores
-  const porTokens = lista.filter((t) => {
-    const aut = _autoresTexto(t);
-    return tokens.every((tk) => aut.includes(tk));
-  });
-  if (porTokens.length === 1) return porTokens[0];
-  if (porTokens.length > 1) {
-    // Empate: se TODOS os candidatos são o MESMO trabalho (mesmo título —
-    // submissão republicada/duplicada na planilha), não é ambiguidade real:
-    // usa o registro mais recente. Se os títulos diferem (homônimos de fato),
-    // mantém a recusa — não se chuta entre trabalhos distintos.
-    const titulos = new Set(porTokens.map((t) => normalizaNome(t.titulo || "")));
+  if (!_tokensNome(item.ap).length) return null;
+  // 2) apresentador compatível com ALGUM autor do trabalho (por autor)
+  const candidatos = lista.filter((t) => _autoresLista(t).some((a) => nomesCompativeis(item.ap, a)));
+  if (candidatos.length === 1) return candidatos[0];
+  if (candidatos.length > 1) {
+    // Vários candidatos com o MESMO título = submissão duplicada/republicada
+    // na planilha (não é ambiguidade real): usa o registro mais recente.
+    // Títulos distintos = homônimos de fato → mantém a recusa.
+    const titulos = new Set(candidatos.map((t) => normalizaNome(t.titulo || "")));
     if (titulos.size === 1) {
-      return porTokens.slice().sort((a, b) =>
+      return candidatos.slice().sort((a, b) =>
         String(b.atualizado_em || "").localeCompare(String(a.atualizado_em || "")))[0];
     }
     return null; // empate real → não casa
   }
-  // 3) similaridade (Dice de bigramas) contra cada autor individual;
-  //    casa só se EXATAMENTE UM trabalho atingir o limiar (≥ 0.82)
-  const pontuados = lista.map((t) => {
-    const autores = Array.isArray(t.autores) ? t.autores : String(t.autores || "").split(",");
-    const score = Math.max(0, ...autores.map((a) => similaridadeNomes(item.ap, a)));
-    return { t, score };
-  }).filter((x) => x.score >= SAM_LIMIAR_NOME);
-  if (pontuados.length === 1) return pontuados[0].t;
-  return null; // 4) nada atingiu o limiar, ou dois+ empatados acima dele
+  return null; // nenhum compatível
 }
 
 /* ============================================================
@@ -317,5 +364,6 @@ Object.assign(window, {
   Microscope, Stethoscope, ImageIcon, Coffee, Mic, Users, UserRound, Award, ArrowLeft,
   Lock, Play, Pause, SkipForward, X, Upload, Headphones, ListChecks, Layers, RotateCw, Check, QRCode, qrUrlFor, useHashRoute, useScale, useWide, useFit, usePosterMode,
   SAM_API_URL, useTrabalhos, trabalhoNaLista, normalizaNome, similaridadeNomes, casarTrabalho,
+  nomesCompativeis, nomeApresentador, nomeLimpoAutor,
   Carregando, EstadoVazio, FRASE_SEM_TRABALHOS,
 });
