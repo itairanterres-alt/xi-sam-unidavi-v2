@@ -145,7 +145,7 @@ function Home() {
                       <div style={{ fontSize:14.5, fontWeight:700, color:C.tinta, lineHeight:1.3, marginBottom:4 }}>{it.titulo}</div>
                       <div style={{ display:"flex", alignItems:"center", gap:9, marginTop:7 }}>
                         <AvatarAutor url={t ? (t.foto_autores_url || t.foto_autores_dataUrl) : null} size={32} />
-                        <span style={{ fontSize:12.5, color:C.cinza, flex:1, minWidth:0 }}>{it.ap}</span>
+                        <span style={{ fontSize:12.5, color:C.cinza, flex:1, minWidth:0 }}>{t ? nomeApresentador(it, t) : it.ap}</span>
                         {t && <SeloMaterial t={t} />}
                         {t ? <SeloVer t={t} /> : <span style={{ fontSize:11.5, color:"#9AA8B8", whiteSpace:"nowrap" }}>em breve</span>}
                       </div>
@@ -218,7 +218,7 @@ function Home() {
                 <div style={{ fontSize:13.5, fontWeight:700, color:C.tinta, lineHeight:1.3 }}>{p.titulo}</div>
                 <div style={{ display:"flex", alignItems:"center", gap:9, marginTop:4 }}>
                   <AvatarAutor url={t ? (t.foto_autores_url || t.foto_autores_dataUrl) : null} size={32} />
-                  <span style={{ fontSize:12.5, color:C.cinza, flex:1, minWidth:0 }}>{p.ap}</span>
+                  <span style={{ fontSize:12.5, color:C.cinza, flex:1, minWidth:0 }}>{t ? nomeApresentador(p, t) : p.ap}</span>
                   {t && <SeloMaterial t={t} />}
                   {t ? <SeloVer t={t} /> : <span style={{ fontSize:11.5, color:"#9AA8B8", whiteSpace:"nowrap" }}>em breve</span>}
                 </div>
@@ -266,7 +266,7 @@ function Home() {
                   {t ? (
                     <div style={{ display:"flex", alignItems:"center", gap:9, marginTop:7 }}>
                       <AvatarAutor url={t.foto_autores_url || t.foto_autores_dataUrl} size={34} />
-                      <span style={{ fontSize:12.5, color:C.cinza, flex:1, minWidth:0 }}>{o.ap}</span>
+                      <span style={{ fontSize:12.5, color:C.cinza, flex:1, minWidth:0 }}>{nomeApresentador(o, t)}</span>
                       <SeloMaterial t={t} />
                       <SeloVer t={t} />
                     </div>
