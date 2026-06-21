@@ -323,18 +323,32 @@ function casarTrabalho(item, lista) {
   // 2) apresentador compatível com ALGUM autor do trabalho (por autor)
   const candidatos = lista.filter((t) => _autoresLista(t).some((a) => nomesCompativeis(item.ap, a)));
   if (candidatos.length === 1) return candidatos[0];
-  if (candidatos.length > 1) {
-    // Vários candidatos com o MESMO título = submissão duplicada/republicada
-    // na planilha (não é ambiguidade real): usa o registro mais recente.
-    // Títulos distintos = homônimos de fato → mantém a recusa.
-    const titulos = new Set(candidatos.map((t) => normalizaNome(t.titulo || "")));
-    if (titulos.size === 1) {
-      return candidatos.slice().sort((a, b) =>
-        String(b.atualizado_em || "").localeCompare(String(a.atualizado_em || "")))[0];
+  if (!candidatos.length) return null;
+  // 3) VÁRIOS candidatos: o apresentador é autor de mais de um trabalho
+  //    (coautoria). Desempata pelo TÍTULO do programa.
+  if (normalizaNome(item.titulo || "")) {
+    const ranked = candidatos
+      .map((t) => ({ t, s: similaridadeNomes(item.titulo, t.titulo || "") }))
+      .sort((a, b) => b.s - a.s);
+    // só aceita se houver um vencedor claro (bom e destacado do 2º)
+    if (ranked[0].s >= 0.5 && (ranked.length < 2 || ranked[0].s - ranked[1].s >= 0.12)) {
+      return ranked[0].t;
     }
-    return null; // empate real → não casa
   }
-  return null; // nenhum compatível
+  // 4) sem título ou empate de título: prefere o trabalho onde o
+  //    apresentador é o 1º autor (autoria principal x coautoria)
+  const comoPrimeiro = candidatos.filter((t) => {
+    const a0 = _autoresLista(t)[0];
+    return a0 && nomesCompativeis(item.ap, a0);
+  });
+  if (comoPrimeiro.length === 1) return comoPrimeiro[0];
+  // 5) submissão duplicada/republicada (mesmo título) → registro mais recente
+  const titulos = new Set(candidatos.map((t) => normalizaNome(t.titulo || "")));
+  if (titulos.size === 1) {
+    return candidatos.slice().sort((a, b) =>
+      String(b.atualizado_em || "").localeCompare(String(a.atualizado_em || "")))[0];
+  }
+  return null; // ambiguidade real irreduzível → não casa
 }
 
 /* ============================================================
