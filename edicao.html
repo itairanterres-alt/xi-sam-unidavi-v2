@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IX SAM · Medicina UNIDAVI · Arquivo</title>
+
+  <!-- Recursos referenciados em JS/JSX (o bundler não os descobre sozinho) -->
+  <meta name="ext-resource-dependency" content="assets/logo-unidavi.png" data-resource-id="logoUnidavi" />
+  <meta name="ext-resource-dependency" content="assets/sam-arte-base.jpg" data-resource-id="samArteBase" />
+  <meta name="ext-resource-dependency" content="assets/sam-arte-base-mobile.jpg" data-resource-id="samArteBaseMobile" />
+
+  <!-- Open Graph / compartilhamento (WhatsApp etc.) — og:image com URL ABSOLUTA (produção Vercel) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="SAM · Medicina UNIDAVI" />
+  <meta property="og:title" content="Arquivo da SAM · Semana Acadêmica da Medicina UNIDAVI" />
+  <meta property="og:description" content="Edições I–X da Semana Acadêmica da Medicina UNIDAVI · Rio do Sul/SC. Programa, autoria e transmissões de cada edição." />
+  <meta property="og:image" content="https://xi-sam-unidavi.vercel.app/assets/sam-arte-base.jpg" />
+  <meta property="og:image:width" content="1734" />
+  <meta property="og:image:height" content="907" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Arquivo da SAM · Medicina UNIDAVI" />
+  <meta name="twitter:description" content="Edições I–X da Semana Acadêmica da Medicina UNIDAVI · Rio do Sul/SC." />
+  <meta name="twitter:image" content="https://xi-sam-unidavi.vercel.app/assets/sam-arte-base.jpg" />
+
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <meta name="theme-color" content="#011b5f" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet" />
+  <style>
+    *{ box-sizing:border-box; }
+    html,body{ margin:0; padding:0; }
+    body{ font-family:'IBM Plex Sans', system-ui, -apple-system, sans-serif; color:#0C1A2B; background:#F7F9FB; -webkit-font-smoothing:antialiased; }
+    input{ outline:none; font-family:inherit; }
+    input:focus{ border-color:#00ADEF !important; }
+    button{ font-family:inherit; }
+    .card-link{ transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+    .card-link:hover{ border-color:#00ADEF !important; box-shadow:0 6px 18px rgba(2,62,136,0.13); transform:translateY(-1px); }
+    .card-link:focus-visible{ outline:3px solid #00ADEF; outline-offset:2px; }
+    .sam-spin{ animation:samSpin .9s linear infinite; }
+    @keyframes samSpin{ to{ transform:rotate(360deg); } }
+    #root{ min-height:100vh; }
+
+    /* ---- HERO responsivo: arte-base desktop (wide) e mobile (tall) ---- */
+    .hero-wrap{ min-height:clamp(330px, 44vw, 470px); }
+    .hero-arte{ position:absolute; inset:0; background-image:url(assets/sam-arte-base.jpg); background-size:cover; background-position:center right; }
+    .hero-scrim{ position:absolute; inset:0;
+      background:linear-gradient(100deg, rgba(1,21,52,0.80) 0%, rgba(1,28,72,0.46) 40%, rgba(1,30,80,0.08) 66%, rgba(1,30,80,0) 86%);
+      -webkit-mask-image:linear-gradient(to bottom, #000 0%, #000 74%, transparent 94%);
+      mask-image:linear-gradient(to bottom, #000 0%, #000 74%, transparent 94%); }
+    .hero-pad{ position:relative; padding:clamp(26px, 4vw, 52px); display:flex; flex-direction:column; justify-content:center; width:100%; }
+    /* title-card: garante contraste do texto sobre a arte, independente da imagem */
+    .hero-card{ position:relative; max-width:560px; align-self:flex-start;
+      background:rgba(2,22,60,0.40); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
+      border:1px solid rgba(255,255,255,0.10); border-radius:18px; padding:clamp(20px, 3vw, 30px); }
+    @media (max-width:640px){
+      .hero-wrap{ min-height:600px; align-items:flex-start; }
+      .hero-arte{ background-image:url(assets/sam-arte-base-mobile.jpg); background-position:center top; }
+      .hero-scrim{ background:linear-gradient(180deg, rgba(1,21,52,0.86) 0%, rgba(1,28,72,0.5) 30%, rgba(1,30,80,0.1) 52%, rgba(1,30,80,0) 72%);
+        -webkit-mask-image:none; mask-image:none; }
+      .hero-pad{ justify-content:flex-start; padding-top:32px; }
+      .hero-card{ max-width:100%; }
+    }
+  </style>
+
+  <!-- React + Babel (versões fixadas) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <template id="__bundler_thumbnail" data-bg-color="#023E88">
+    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="800" fill="#023E88"/>
+      <text x="600" y="430" font-family="'IBM Plex Sans',sans-serif" font-size="220" font-weight="800" fill="#ffffff" text-anchor="middle">IX</text>
+      <text x="600" y="540" font-family="'IBM Plex Sans',sans-serif" font-size="44" font-weight="700" fill="#00ADEF" text-anchor="middle" letter-spacing="6">SAM</text>
+      <text x="600" y="620" font-family="'IBM Plex Sans',sans-serif" font-size="30" font-weight="500" fill="#cdd9e6" text-anchor="middle">Medicina UNIDAVI · Arquivo</text>
+    </svg>
+  </template>
+
+  <!-- Dados base (C, AREA_COR, DIAS) — script clássico -->
+  <script src="data.js"></script>
+  <!-- Lib (ícones, hooks, normalizaNome, Carregando) — Babel -->
+  <script type="text/babel" src="lib.jsx"></script>
+  <!-- Componentes da edição arquivada — Babel -->
+  <script type="text/babel" src="edicoes.jsx"></script>
+
+  <!-- App / Router -->
+  <script type="text/babel" data-presets="react">
+    function AppEdicoes() {
+      const hash = useHashRoute();
+      const id = useMemo(() => {
+        const parts = hash.replace(/^#\//, "").split("/").filter(Boolean);
+        if (parts[0] === "edicao" && parts[1]) return parts[1];
+        return "ix"; // entrega só a IX por enquanto
+      }, [hash]);
+      return <PaginaEdicao id={id} />;
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<AppEdicoes />);
+  </script>
+</body>
+</html>
