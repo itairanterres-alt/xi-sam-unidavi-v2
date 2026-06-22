@@ -47,6 +47,48 @@ function StatusTrabalhos({ status, recarregar }) {
   );
   return null;
 }
+/* ---------------- ARQUIVO DE EDIÇÕES (na Home) ----------------
+   Lê o manifesto leve edicoes-index.json (nível-hero das edições I–X);
+   cada card abre a página da edição arquivada (edicao.html#/edicao/:id). */
+function ArquivoEdicoes() {
+  const [eds, setEds] = useState(null);
+  useEffect(() => {
+    let vivo = true;
+    fetch("edicoes-index.json").then((r) => r.json())
+      .then((d) => { if (vivo) setEds(d.edicoes || []); })
+      .catch(() => { if (vivo) setEds([]); });
+    return () => { vivo = false; };
+  }, []);
+  if (!eds || !eds.length) return null;
+  return (
+    <section id="arquivo-edicoes" style={{ maxWidth:980, margin:"0 auto", padding:"14px 16px 40px" }}>
+      <div style={{ display:"flex", alignItems:"baseline", gap:10, marginBottom:4 }}>
+        <Layers size={18} color={C.azul} />
+        <h2 style={{ fontSize:18, fontWeight:800, color:C.tinta, margin:0 }}>Edições anteriores</h2>
+      </div>
+      <div style={{ fontSize:13.5, color:C.cinza, marginBottom:16, lineHeight:1.4 }}>Dez edições já realizadas — o arquivo de cada uma, com programa, autoria e transmissões.</div>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(158px, 1fr))", gap:12 }}>
+        {eds.map((e) => (
+          <a key={e.id} href={"edicao.html#/edicao/" + e.id} className="card-link"
+            style={{ background:"#fff", border:"1px solid #E3EAF2", borderRadius:14, padding:"16px 16px 14px", textDecoration:"none", display:"flex", flexDirection:"column", gap:5 }}>
+            <div style={{ display:"flex", alignItems:"baseline", gap:7 }}>
+              <span style={{ fontSize:32, fontWeight:800, color:C.azul, letterSpacing:-1, lineHeight:0.9 }}>{e.edicaoRomano}</span>
+              <span style={{ fontSize:11, fontWeight:700, letterSpacing:1.5, color:C.ciano }}>SAM</span>
+            </div>
+            <div style={{ fontSize:12.5, color:C.tinta, fontWeight:600, marginTop:4, lineHeight:1.35 }}>{e.datasTexto}</div>
+            <div style={{ fontSize:11.5, color:C.cinza, marginTop:2 }}>
+              {e.nTrabalhos ? e.nTrabalhos + " trabalhos" : "programa"}{e.nDias ? " · " + e.nDias + (e.nDias === 1 ? " dia" : " dias") : ""}
+            </div>
+            <div style={{ display:"flex", alignItems:"center", gap:4, marginTop:8, fontSize:11.5, fontWeight:700, color:C.ciano }}>
+              ver edição <ChevronRight size={13} color={C.ciano} />
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function Home() {
   const painel = useMemo(_samPainelAtivo, []);
   // em modo painel, destaca o dia atual primeiro (se o evento estiver acontecendo)
@@ -294,6 +336,7 @@ function Home() {
             card casado abre o resumo/pôster. (Galeria pública removida
             por decisão de produto; EstadoVazio segue em uso no Telão.) */}
       </div>
+      <ArquivoEdicoes />
       <footer style={{ textAlign:"center", padding:"24px 16px 40px", color:C.cinza, fontSize:12 }}>XI SAM 2026 · Medicina UNIDAVI</footer>
     </div>
   );

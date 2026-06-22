@@ -1325,6 +1325,7 @@ function SiteHeader() {
             <nav style={{ marginLeft:"auto", display:"flex", gap:4 }}>
               <a href="#/" style={link(!sobre)}>Programação</a>
               <a href="#/sobre" style={link(sobre)}>Sobre</a>
+              <a href="#/" onClick={(e) => { e.preventDefault(); const ir = () => { const el = document.getElementById("arquivo-edicoes"); if (el) window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top - 68, behavior:"smooth" }); }; if ((window.location.hash || "#/") !== "#/") { go("#/"); setTimeout(ir, 90); } else { ir(); } }} style={link(false)}>Arquivo</a>
             </nav>
           );
         })()}

@@ -94,12 +94,14 @@
   <script type="text/babel" data-presets="react">
     function AppEdicoes() {
       const hash = useHashRoute();
-      const id = useMemo(() => {
-        const parts = hash.replace(/^#\//, "").split("/").filter(Boolean);
-        if (parts[0] === "edicao" && parts[1]) return parts[1];
-        return "ix"; // entrega só a IX por enquanto
+      const { id, q } = useMemo(() => {
+        const m = (hash || "").match(/^#\/edicao\/([^/?]+)(?:\?(.*))?$/);
+        const seg = m ? m[1] : null;
+        let q = "";
+        if (m && m[2]) { try { q = new URLSearchParams(m[2]).get("q") || ""; } catch (e) {} }
+        return { id: seg || "x", q };
       }, [hash]);
-      return <PaginaEdicao id={id} />;
+      return <PaginaEdicao id={id} initialQ={q} />;
     }
     ReactDOM.createRoot(document.getElementById("root")).render(<AppEdicoes />);
   </script>

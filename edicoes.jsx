@@ -318,9 +318,90 @@ function useEdicaoData(id) {
   return estado;
 }
 
-function PaginaEdicao({ id }) {
+/* ---- busca entre edições: carrega as 10 sob demanda (cache compartilhado) ---- */
+let _todasPromise = null;
+function carregarTodasEdicoes() {
+  if (_todasPromise) return _todasPromise;
+  const ids = Object.keys(EDICOES_INDEX);
+  _todasPromise = Promise.all(ids.map((id) =>
+    fetch(EDICOES_INDEX[id].file).then((r) => r.json())
+      .then((d) => (d.trabalhos || []).map((t) => ({ ...t, _edId: d.edicao.id, _edRomano: d.edicao.edicaoRomano, _edNum: d.edicao.edicaoNum, _edDatas: d.edicao.datasTexto })))
+      .catch(() => [])
+  )).then((arrs) => arrs.flat());
+  return _todasPromise;
+}
+function useTodasEdicoes(ativo) {
+  const [estado, setEstado] = useState({ carregando:false, lista:null });
+  useEffect(() => {
+    if (!ativo || estado.lista) return;
+    setEstado({ carregando:true, lista:null });
+    carregarTodasEdicoes().then((lista) => setEstado({ carregando:false, lista }));
+  }, [ativo]);
+  return estado;
+}
+
+const CAMADA_ROTULO = { oral_tc2:"Oral", poster_tc1:"Pôster", palestra:"Palestra", ic_2fase:"IC", case:"Case", atividade:"Atividade" };
+
+/* resultado de busca cruzada — abre a edição correspondente, levando o termo */
+function ResultadoCruzado({ t, termo }) {
+  const cor = corArea(t.area);
+  const autor = _val(t.autor);
+  const ir = () => { go(`#/edicao/${t._edId}?q=${encodeURIComponent(termo)}`); window.scrollTo(0, 0); };
+  return (
+    <button onClick={ir} className="card-link" style={{ width:"100%", textAlign:"left", background:"#fff", border:"1px solid #E3EAF2", borderLeft:`4px solid ${cor}`, borderRadius:12, padding:"13px 16px", cursor:"pointer", fontFamily:"inherit", display:"flex", gap:12, alignItems:"center" }}>
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6, flexWrap:"wrap" }}>
+          <span style={{ fontSize:11, fontWeight:800, letterSpacing:0.5, color:C.azul, background:C.cianoClaro, borderRadius:6, padding:"2px 8px" }}>{t._edRomano} SAM</span>
+          <span style={{ fontSize:11, fontWeight:700, color:C.cinza }}>{CAMADA_ROTULO[t.camada] || ""}</span>
+          {t.area ? <span style={{ background:cor, color:"#fff", borderRadius:999, padding:"2px 9px", fontSize:10.5, fontWeight:700 }}>{t.area}</span> : null}
+        </div>
+        <div style={{ fontSize:14, fontWeight:700, color:C.tinta, lineHeight:1.3, textWrap:"pretty" }}>{t.titulo}</div>
+        {autor ? <div style={{ fontSize:12.5, color:C.cinza, marginTop:4 }}>{autor}</div> : null}
+      </div>
+      <ChevronRight size={18} color={C.ciano} style={{ flexShrink:0 }} />
+    </button>
+  );
+}
+
+/* painel de resultados quando o escopo é "todas as edições" */
+function BuscaTodas({ bn, termo, estado }) {
+  if (!bn) return (
+    <div style={{ marginTop:24, textAlign:"center", color:C.cinza, fontSize:14 }}>Digite para buscar nas dez edições da SAM.</div>
+  );
+  if (estado.carregando || !estado.lista) return <Carregando frase="Buscando em todas as edições…" style={{ padding:"34px 0" }} />;
+  const res = estado.lista.filter((t) => [t.titulo, t.autor, t.area, t.orientador].some((v) => normalizaNome(v).includes(bn)));
+  if (!res.length) return (
+    <div style={{ marginTop:24, textAlign:"center", color:C.cinza, fontSize:14 }}>Nenhum trabalho encontrado para “{termo.trim()}” em nenhuma edição.</div>
+  );
+  const porEd = {};
+  res.forEach((t) => { (porEd[t._edId] = porEd[t._edId] || []).push(t); });
+  const eds = Object.keys(porEd).sort((a, b) => porEd[b][0]._edNum - porEd[a][0]._edNum);
+  return (
+    <div style={{ marginTop:22 }}>
+      <div style={{ fontSize:13, color:C.cinza, marginBottom:16 }}>{res.length} {res.length === 1 ? "resultado" : "resultados"} em {eds.length} {eds.length === 1 ? "edição" : "edições"}</div>
+      {eds.map((edId) => (
+        <div key={edId} style={{ marginTop:18 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:9, marginBottom:10 }}>
+            <span style={{ fontSize:12, fontWeight:800, letterSpacing:1, textTransform:"uppercase", color:C.azul }}>{porEd[edId][0]._edRomano} SAM</span>
+            <span style={{ fontSize:12.5, color:C.cinza }}>{porEd[edId][0]._edDatas}</span>
+            <span style={{ flex:1, height:1, background:"#E3EAF2" }} />
+            <span style={{ fontSize:12, color:C.cinza }}>{porEd[edId].length}</span>
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+            {porEd[edId].map((t, i) => <ResultadoCruzado key={t.titulo + i} t={t} termo={termo} />)}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PaginaEdicao({ id, initialQ }) {
   const { status, data } = useEdicaoData(id);
-  const [busca, setBusca] = useState("");
+  const [busca, setBusca] = useState(initialQ || "");
+  const [escopo, setEscopo] = useState("edicao");        // "edicao" | "todas"
+  const todasEd = useTodasEdicoes(escopo === "todas");
+  useEffect(() => { setBusca(initialQ || ""); setEscopo("edicao"); }, [id, initialQ]);
 
   if (status === "nao_encontrada") {
     return (
@@ -387,24 +468,40 @@ function PaginaEdicao({ id }) {
           {resumoItens.map(([v, lbl], i) => <span key={i}><strong style={{ color:C.tinta }}>{v}</strong> {lbl}</span>)}
         </div>
 
-        {/* busca */}
-        <div style={{ position:"relative", marginTop:18 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.cinza} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar trabalho, autor, área ou orientador…" aria-label="Buscar"
-            style={{ width:"100%", padding:"13px 42px", border:"1px solid #E3EAF2", borderRadius:11, fontSize:14.5, color:C.tinta, background:"#fff", boxSizing:"border-box" }} />
-          {busca && <button onClick={() => setBusca("")} aria-label="Limpar" style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", width:30, height:30, border:"none", background:"transparent", color:C.cinza, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><X size={16} /></button>}
+        {/* busca + escopo */}
+        <div style={{ marginTop:18 }}>
+          <div style={{ position:"relative" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.cinza} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder={escopo === "todas" ? "Buscar nas dez edições…" : "Buscar trabalho, autor, área ou orientador…"} aria-label="Buscar"
+              style={{ width:"100%", padding:"13px 42px", border:"1px solid #E3EAF2", borderRadius:11, fontSize:14.5, color:C.tinta, background:"#fff", boxSizing:"border-box" }} />
+            {busca && <button onClick={() => setBusca("")} aria-label="Limpar" style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", width:30, height:30, border:"none", background:"transparent", color:C.cinza, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><X size={16} /></button>}
+          </div>
+          <div style={{ display:"flex", alignItems:"center", gap:9, marginTop:10, flexWrap:"wrap" }}>
+            <span style={{ fontSize:12.5, color:C.cinza, fontWeight:600 }}>Buscar em:</span>
+            <div style={{ display:"inline-flex", background:"#fff", border:"1px solid #E3EAF2", borderRadius:999, padding:3, gap:3 }}>
+              {[["edicao", "Nesta edição"], ["todas", "Todas as edições"]].map(([k, lbl]) => (
+                <button key={k} onClick={() => setEscopo(k)} style={{ border:"none", borderRadius:999, padding:"7px 15px", fontSize:12.5, fontWeight:700, cursor:"pointer", fontFamily:"inherit", background: escopo === k ? C.azul : "transparent", color: escopo === k ? "#fff" : C.cinza }}>{lbl}</button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {bn && !filtrados.length ? (
-          <div style={{ marginTop:26, textAlign:"center", color:C.cinza, fontSize:14 }}>Nenhum trabalho encontrado para “{busca.trim()}”.</div>
-        ) : null}
+        {escopo === "todas" ? (
+          <BuscaTodas bn={bn} termo={busca} estado={todasEd} />
+        ) : (
+          <>
+            {bn && !filtrados.length ? (
+              <div style={{ marginTop:26, textAlign:"center", color:C.cinza, fontSize:14 }}>Nenhum trabalho encontrado para “{busca.trim()}” nesta edição.</div>
+            ) : null}
 
-        <GrupoCamada titulo="Apresentações orais" sub="Trabalhos de Curso II concluídos (8ª fase), apresentados nas sessões orais." icone={Mic} trabalhos={orais} ordemDias={ordemDias} contadorRef={contador} />
-        <GrupoCamada titulo="Pôsteres" sub="Projetos de Trabalho de Curso I (7ª fase), expostos na sessão de pôsteres." icone={Users} trabalhos={posteres} ordemDias={ordemDias} contadorRef={contador} />
-        <GrupoCamada titulo="Palestras e convidados" sub="Abertura, palestrantes convidados e momentos do programa." icone={Award} trabalhos={palestras} ordemDias={ordemDias} contadorRef={contador} />
-        <GrupoCamada titulo="Iniciação científica" sub="Trabalhos de IC — 2ª fase." icone={Microscope} trabalhos={ics} ordemDias={ordemDias} contadorRef={contador} />
-        <GrupoCamada titulo="Cases de sucesso" sub="Trajetórias e relatos de egressos da Medicina UNIDAVI." icone={Award} trabalhos={cases} ordemDias={ordemDias} contadorRef={contador} />
-        <GrupoCamada titulo="Atividades" sub="Mesas-redondas, ligas acadêmicas e demais atividades." icone={Users} trabalhos={atividades} ordemDias={ordemDias} contadorRef={contador} />
+            <GrupoCamada titulo="Apresentações orais" sub="Trabalhos de Curso II concluídos (8ª fase), apresentados nas sessões orais." icone={Mic} trabalhos={orais} ordemDias={ordemDias} contadorRef={contador} />
+            <GrupoCamada titulo="Pôsteres" sub="Projetos de Trabalho de Curso I (7ª fase), expostos na sessão de pôsteres." icone={Users} trabalhos={posteres} ordemDias={ordemDias} contadorRef={contador} />
+            <GrupoCamada titulo="Palestras e convidados" sub="Abertura, palestrantes convidados e momentos do programa." icone={Award} trabalhos={palestras} ordemDias={ordemDias} contadorRef={contador} />
+            <GrupoCamada titulo="Iniciação científica" sub="Trabalhos de IC — 2ª fase." icone={Microscope} trabalhos={ics} ordemDias={ordemDias} contadorRef={contador} />
+            <GrupoCamada titulo="Cases de sucesso" sub="Trajetórias e relatos de egressos da Medicina UNIDAVI." icone={Award} trabalhos={cases} ordemDias={ordemDias} contadorRef={contador} />
+            <GrupoCamada titulo="Atividades" sub="Mesas-redondas, ligas acadêmicas e demais atividades." icone={Users} trabalhos={atividades} ordemDias={ordemDias} contadorRef={contador} />
+          </>
+        )}
 
         <EdicoesAnteriores atual={ed.edicaoRomano} />
       </div>
@@ -418,5 +515,5 @@ function PaginaEdicao({ id }) {
 Object.assign(window, {
   EDICOES_INDEX, corArea, EdicaoHeader, HeroEdicao, TransmissoesEdicao,
   AvisoCobertura, RolesTrabalho, CardTrabalho, GrupoCamada, EdicoesAnteriores,
-  useEdicaoData, PaginaEdicao,
+  useEdicaoData, carregarTodasEdicoes, useTodasEdicoes, ResultadoCruzado, BuscaTodas, PaginaEdicao,
 });
