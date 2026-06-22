@@ -88,13 +88,13 @@
       "dataInicio": "2023-06-26",
       "dataFim": "2023-06-29",
       "status": "encerrada",
-      "cobertura": "titulos",
+      "cobertura": "completa",
       "modalidade": "presencial",
       "local": null,
-      "nOrais": 8,
-      "nPosteres": 9,
-      "nTrabalhos": 18,
-      "nDias": 0
+      "nOrais": 36,
+      "nPosteres": 33,
+      "nTrabalhos": 69,
+      "nDias": 4
     },
     {
       "id": "iv",
