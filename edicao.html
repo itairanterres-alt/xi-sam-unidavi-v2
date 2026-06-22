@@ -48,18 +48,16 @@
     .hero-wrap{ min-height:clamp(330px, 44vw, 470px); }
     .hero-arte{ position:absolute; inset:0; background-image:url(assets/sam-arte-base.jpg); background-size:cover; background-position:center right; }
     .hero-scrim{ position:absolute; inset:0;
-      background:linear-gradient(100deg, rgba(1,21,52,0.80) 0%, rgba(1,28,72,0.46) 40%, rgba(1,30,80,0.08) 66%, rgba(1,30,80,0) 86%);
+      background:linear-gradient(100deg, rgba(1,21,52,0.90) 0%, rgba(1,28,72,0.56) 40%, rgba(1,30,80,0.12) 66%, rgba(1,30,80,0) 86%);
       -webkit-mask-image:linear-gradient(to bottom, #000 0%, #000 74%, transparent 94%);
       mask-image:linear-gradient(to bottom, #000 0%, #000 74%, transparent 94%); }
     .hero-pad{ position:relative; padding:clamp(26px, 4vw, 52px); display:flex; flex-direction:column; justify-content:center; width:100%; }
-    /* title-card: garante contraste do texto sobre a arte, independente da imagem */
-    .hero-card{ position:relative; max-width:560px; align-self:flex-start;
-      background:rgba(2,22,60,0.40); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
-      border:1px solid rgba(255,255,255,0.10); border-radius:18px; padding:clamp(20px, 3vw, 30px); }
+    /* texto sobre a arte: fundo 100% transparente (sem blur/fill, que borrava a imagem) */
+    .hero-card{ position:relative; max-width:560px; align-self:flex-start; background:transparent; padding:0; }
     @media (max-width:640px){
       .hero-wrap{ min-height:600px; align-items:flex-start; }
       .hero-arte{ background-image:url(assets/sam-arte-base-mobile.jpg); background-position:center top; }
-      .hero-scrim{ background:linear-gradient(180deg, rgba(1,21,52,0.86) 0%, rgba(1,28,72,0.5) 30%, rgba(1,30,80,0.1) 52%, rgba(1,30,80,0) 72%);
+      .hero-scrim{ background:linear-gradient(180deg, rgba(1,21,52,0.92) 0%, rgba(1,28,72,0.6) 30%, rgba(1,30,80,0.14) 52%, rgba(1,30,80,0) 72%);
         -webkit-mask-image:none; mask-image:none; }
       .hero-pad{ justify-content:flex-start; padding-top:32px; }
       .hero-card{ max-width:100%; }

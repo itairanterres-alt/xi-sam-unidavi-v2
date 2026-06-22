@@ -94,7 +94,9 @@ function Home() {
   // em modo painel, destaca o dia atual primeiro (se o evento estiver acontecendo)
   const [dia, setDia] = useState(() => (painel && _samDiaDeHoje()) || DIAS[0]);
   const [filtro, setFiltro] = useState("Todos");
-  const [busca, setBusca] = useState("");
+  const [busca, setBusca] = useState(() => { try { return new URLSearchParams(window.location.search).get("q") || ""; } catch (e) { return ""; } });
+  const [escopo, setEscopo] = useState("edicao");        // "edicao" (XI) | "todas" (arquivo)
+  const todasEd = useTodasEdicoes(escopo === "todas");
   const { trabalhos, status, recarregar } = useTrabalhos();
   const buscaNorm = normalizaNome(busca);
   const resultados = useMemo(() => {
@@ -156,15 +158,27 @@ function Home() {
         {/* Busca — filtra orais + pôsteres de todos os dias por autor, título ou área */}
         <div style={{ position:"relative", marginBottom:16 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.cinza} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar trabalho, autor ou área…" aria-label="Buscar trabalho, autor ou área"
+          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder={escopo === "todas" ? "Buscar nas dez edições anteriores…" : "Buscar trabalho, autor ou área…"} aria-label="Buscar trabalho, autor ou área"
             style={{ width:"100%", padding:"13px 42px 13px 42px", border:"1px solid #E3EAF2", borderRadius:11, fontSize:14.5, color:C.tinta, background:"#fff", boxSizing:"border-box" }} />
           {busca && (
             <button onClick={() => setBusca("")} aria-label="Limpar busca" style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", width:30, height:30, border:"none", background:"transparent", color:C.cinza, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", borderRadius:8 }}><X size={16} /></button>
           )}
         </div>
 
+        {/* Escopo da busca: nesta edição (XI, ao vivo) ou todas as edições do arquivo */}
+        <div style={{ display:"flex", alignItems:"center", gap:9, marginBottom:18, flexWrap:"wrap" }}>
+          <span style={{ fontSize:12.5, color:C.cinza, fontWeight:600 }}>Buscar em:</span>
+          <div style={{ display:"inline-flex", background:"#fff", border:"1px solid #E3EAF2", borderRadius:999, padding:3, gap:3 }}>
+            {[["edicao", "Nesta edição"], ["todas", "Todas as edições"]].map(([k, lbl]) => (
+              <button key={k} onClick={() => setEscopo(k)} style={{ border:"none", borderRadius:999, padding:"7px 15px", fontSize:12.5, fontWeight:700, cursor:"pointer", fontFamily:"inherit", background: escopo === k ? C.azul : "transparent", color: escopo === k ? "#fff" : C.cinza }}>{lbl}</button>
+            ))}
+          </div>
+        </div>
+
+        {escopo === "todas" && <BuscaTodas bn={normalizaNome(busca)} termo={busca} estado={todasEd} />}
+
         {/* Resultados da busca (substituem o programa enquanto há texto) */}
-        {busca.trim() !== "" && (
+        {escopo === "edicao" && busca.trim() !== "" && (
           <div style={{ marginBottom:40 }}>
             <div style={{ fontSize:13, color:C.cinza, marginBottom:14 }}>
               {resultados.length === 0
@@ -205,7 +219,7 @@ function Home() {
           </div>
         )}
 
-        {busca.trim() === "" && (
+        {escopo === "edicao" && busca.trim() === "" && (
         <>
         <div style={{ display:"flex", gap:6, marginBottom:14, flexWrap:"wrap", alignItems:"center" }}>
           {DIAS.map((dd) => (

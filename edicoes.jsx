@@ -320,6 +320,20 @@ function useEdicaoData(id) {
 
 /* ---- busca entre edições: carrega as 10 sob demanda (cache compartilhado) ---- */
 let _todasPromise = null;
+/* XI (edição viva): não tem *_sam.json — seus itens vêm do PROGRAMA (data.js).
+   Entram na busca "todas as edições" como camada oral/pôster, ligados à Home. */
+function _xiTrabalhos() {
+  if (typeof PROGRAMA === "undefined" || !PROGRAMA || typeof DIAS === "undefined") return [];
+  const meta = { _edId:"xi", _edRomano:"XI", _edNum:11, _edDatas:"22 a 26 de junho de 2026" };
+  const out = [];
+  DIAS.forEach((d) => {
+    const dia = (d.split("·")[1] || d).trim();
+    const pg = PROGRAMA[d]; if (!pg) return;
+    (pg.orais || []).forEach((o) => out.push({ camada:"oral_tc2", titulo:o.titulo, autor:o.ap, area:o.area, orientador:o.uc || null, dia, horario:o.hora, ...meta }));
+    (pg.posteres || []).forEach((p) => out.push({ camada:"poster_tc1", titulo:p.titulo, autor:p.ap, area:p.area, orientador:null, dia, ...meta }));
+  });
+  return out;
+}
 function carregarTodasEdicoes() {
   if (_todasPromise) return _todasPromise;
   const ids = Object.keys(EDICOES_INDEX);
@@ -327,7 +341,7 @@ function carregarTodasEdicoes() {
     fetch(EDICOES_INDEX[id].file).then((r) => r.json())
       .then((d) => (d.trabalhos || []).map((t) => ({ ...t, _edId: d.edicao.id, _edRomano: d.edicao.edicaoRomano, _edNum: d.edicao.edicaoNum, _edDatas: d.edicao.datasTexto })))
       .catch(() => [])
-  )).then((arrs) => arrs.flat());
+  )).then((arrs) => _xiTrabalhos().concat(arrs.flat()));
   return _todasPromise;
 }
 function useTodasEdicoes(ativo) {
@@ -346,9 +360,11 @@ const CAMADA_ROTULO = { oral_tc2:"Oral", poster_tc1:"Pôster", palestra:"Palestr
 function ResultadoCruzado({ t, termo }) {
   const cor = corArea(t.area);
   const autor = _val(t.autor);
-  const ir = () => { go(`#/edicao/${t._edId}?q=${encodeURIComponent(termo)}`); window.scrollTo(0, 0); };
+  const href = t._edId === "xi"
+    ? `index.html?q=${encodeURIComponent(termo)}`
+    : `edicao.html#/edicao/${t._edId}?q=${encodeURIComponent(termo)}`;
   return (
-    <button onClick={ir} className="card-link" style={{ width:"100%", textAlign:"left", background:"#fff", border:"1px solid #E3EAF2", borderLeft:`4px solid ${cor}`, borderRadius:12, padding:"13px 16px", cursor:"pointer", fontFamily:"inherit", display:"flex", gap:12, alignItems:"center" }}>
+    <a href={href} onClick={() => window.scrollTo(0, 0)} className="card-link" style={{ width:"100%", textAlign:"left", textDecoration:"none", background:"#fff", border:"1px solid #E3EAF2", borderLeft:`4px solid ${cor}`, borderRadius:12, padding:"13px 16px", display:"flex", gap:12, alignItems:"center" }}>
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6, flexWrap:"wrap" }}>
           <span style={{ fontSize:11, fontWeight:800, letterSpacing:0.5, color:C.azul, background:C.cianoClaro, borderRadius:6, padding:"2px 8px" }}>{t._edRomano} SAM</span>
@@ -359,7 +375,7 @@ function ResultadoCruzado({ t, termo }) {
         {autor ? <div style={{ fontSize:12.5, color:C.cinza, marginTop:4 }}>{autor}</div> : null}
       </div>
       <ChevronRight size={18} color={C.ciano} style={{ flexShrink:0 }} />
-    </button>
+    </a>
   );
 }
 
