@@ -1091,7 +1091,54 @@ function parseFlashcards(csv) {
     .map((cols) => ({ frente: (cols[0] || "").trim(), verso: (cols[1] || "").trim() }))
     .filter((c) => c.frente);
 }
+/* ===== MathText: renderiza texto com fórmulas LaTeX inline/bloco ($...$, $$...$$)
+   Material (flashcards/quiz) do NotebookLM vem com notação LaTeX. KaTeX (CDN)
+   converte cada trecho entre $; o resto segue como texto normal. Se o KaTeX
+   ainda não carregou, faz um fallback legível trocando os comandos comuns. */
+function _texParaTexto(t) {
+  return String(t)
+    .replace(/\\(ge|geq)\b/g, "\u2265").replace(/\\(le|leq)\b/g, "\u2264")
+    .replace(/\\neq?\b/g, "\u2260").replace(/\\times\b/g, "\u00d7").replace(/\\cdot\b/g, "\u00b7")
+    .replace(/\\div\b/g, "\u00f7").replace(/\\pm\b/g, "\u00b1").replace(/\\approx\b/g, "\u2248")
+    .replace(/\\(mu|micro)\b/g, "\u00b5").replace(/\\alpha\b/g, "\u03b1").replace(/\\beta\b/g, "\u03b2")
+    .replace(/\\Delta\b/g, "\u0394").replace(/\\delta\b/g, "\u03b4").replace(/\\degree\b/g, "\u00b0")
+    .replace(/\\text\{([^}]*)\}/g, "$1").replace(/\\mathrm\{([^}]*)\}/g, "$1")
+    .replace(/\\[,;: ]/g, " ").replace(/\\%/g, "%").replace(/[{}]/g, "").replace(/\\\\/g, " ").trim();
+}
+function useKatexPronto() {
+  const [, forcar] = React.useState(0);
+  React.useEffect(() => {
+    if (typeof window === "undefined" || window.katex) return;
+    const iv = setInterval(() => { if (window.katex) { clearInterval(iv); forcar((n) => n + 1); } }, 150);
+    return () => clearInterval(iv);
+  }, []);
+}
+function MathText({ children }) {
+  const str = children == null ? "" : String(children);
+  if (!str || str.indexOf("$") === -1) return str;
+  const partes = [];
+  const re = /\$\$([\s\S]+?)\$\$|\$([^$]+?)\$/g;
+  let ult = 0, m;
+  while ((m = re.exec(str))) {
+    if (m.index > ult) partes.push(str.slice(ult, m.index));
+    partes.push({ tex: m[1] != null ? m[1] : m[2], bloco: m[1] != null });
+    ult = re.lastIndex;
+  }
+  if (ult < str.length) partes.push(str.slice(ult));
+  if (!partes.some((p) => typeof p !== "string")) return str;
+  return partes.map((p, k) => {
+    if (typeof p === "string") return <React.Fragment key={k}>{p}</React.Fragment>;
+    if (typeof window !== "undefined" && window.katex) {
+      try {
+        const html = window.katex.renderToString(p.tex, { throwOnError: false, displayMode: p.bloco });
+        return <span key={k} dangerouslySetInnerHTML={{ __html: html }} />;
+      } catch (e) {}
+    }
+    return <React.Fragment key={k}>{_texParaTexto(p.tex)}</React.Fragment>;
+  });
+}
 function Flashcards({ cards }) {
+  useKatexPronto();
   const [i, setI] = React.useState(0);
   const [virado, setVirado] = React.useState(false);
   const card = cards[i];
@@ -1102,7 +1149,7 @@ function Flashcards({ cards }) {
         onKeyDown={(e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); setVirado((v) => !v); } }}
         style={{ cursor:"pointer", border:"1px solid #E3EAF2", borderRadius:14, padding:"34px 24px", minHeight:160, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", textAlign:"center", background: virado ? C.cianoClaro : "#fff", transition:"background .15s ease" }}>
         <div style={{ fontSize:11, fontWeight:800, letterSpacing:0.8, textTransform:"uppercase", color: virado ? C.ciano : C.cinza, marginBottom:12 }}>{virado ? "Verso" : "Frente"}</div>
-        <div style={{ fontSize:17, lineHeight:1.45, color:C.tinta, fontWeight: virado ? 400 : 600 }}>{virado ? card.verso : card.frente}</div>
+        <div style={{ fontSize:17, lineHeight:1.45, color:C.tinta, fontWeight: virado ? 400 : 600 }}><MathText>{virado ? card.verso : card.frente}</MathText></div>
         <div style={{ marginTop:16, fontSize:12, color:C.cinza, display:"flex", alignItems:"center", gap:6 }}><RotateCw size={13} color={C.cinza} /> toque para virar</div>
       </div>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:14 }}>
@@ -1114,6 +1161,7 @@ function Flashcards({ cards }) {
   );
 }
 function Quiz({ questions }) {
+  useKatexPronto();
   const [i, setI] = React.useState(0);
   const [escolha, setEscolha] = React.useState(null); // índice 0..3 ou null
   const [acertos, setAcertos] = React.useState(0);
@@ -1133,7 +1181,7 @@ function Quiz({ questions }) {
   return (
     <div>
       <div style={{ fontSize:12, color:C.cinza, fontWeight:700, marginBottom:8 }}>Questão {i + 1} de {questions.length}</div>
-      <div style={{ fontSize:16, fontWeight:700, color:C.tinta, lineHeight:1.4, marginBottom:14 }}>{q.pergunta}</div>
+      <div style={{ fontSize:16, fontWeight:700, color:C.tinta, lineHeight:1.4, marginBottom:14 }}><MathText>{q.pergunta}</MathText></div>
       <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
         {q.alternativas.map((texto, idx) => {
           const ehCorreta = idx === q.correta;
@@ -1144,7 +1192,7 @@ function Quiz({ questions }) {
           return (
             <button key={idx} onClick={() => responder(idx)} disabled={respondido}
               style={{ display:"flex", gap:10, alignItems:"flex-start", textAlign:"left", border:`1.5px solid ${bd}`, background:bg, color:fg, borderRadius:11, padding:"12px 14px", fontSize:14.5, cursor: respondido ? "default" : "pointer", fontFamily:"inherit", lineHeight:1.4 }}>
-              <span style={{ fontWeight:800 }}>{String.fromCharCode(65 + idx)}</span><span style={{ flex:1 }}>{texto}</span>
+              <span style={{ fontWeight:800 }}>{String.fromCharCode(65 + idx)}</span><span style={{ flex:1 }}><MathText>{texto}</MathText></span>
               {respondido && ehCorreta && <Check size={17} color="#1F8A5B" />}
               {respondido && ehEscolhida && !ehCorreta && <X size={17} color="#C0392B" />}
             </button>
@@ -1153,7 +1201,7 @@ function Quiz({ questions }) {
       </div>
       {respondido && q.explicacao && (
         <div style={{ marginTop:14, background:C.papel, border:"1px solid #E3EAF2", borderRadius:11, padding:"12px 14px", fontSize:14, lineHeight:1.5, color:C.cinza }}>
-          <strong style={{ color:C.azul }}>Explicação. </strong>{q.explicacao}
+          <strong style={{ color:C.azul }}>Explicação. </strong><MathText>{q.explicacao}</MathText>
         </div>
       )}
       {respondido && (
