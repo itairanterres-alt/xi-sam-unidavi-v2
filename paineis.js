@@ -75,7 +75,7 @@
         <div class="qrRow">
           <div class="qrCard">
             <img class="qr" src="${qrProg}" alt="QR programação">
-            <div class="qrTxt"><b>PROGRAMAÇÃO</b><span>completa &amp; atualizada</span></div>
+            <div class="qrTxt"><b>PROGRAMAÇÃO</b><span class="url">xi-sam-unidavi.vercel.app</span></div>
           </div>
           ${qrYt ? `<div class="qrCard">
             <img class="qr" src="${qrYt}" alt="QR transmissão">

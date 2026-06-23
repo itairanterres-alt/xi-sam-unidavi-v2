@@ -13,7 +13,7 @@
       "local": "Auditório Célio Simão Martignago",
       "nOrais": 36,
       "nPosteres": 29,
-      "nTrabalhos": 71,
+      "nTrabalhos": 65,
       "nDias": 5
     },
     {
@@ -40,12 +40,12 @@
       "dataInicio": "2025-02-10",
       "dataFim": "2025-02-14",
       "status": "encerrada",
-      "cobertura": "programa_autor",
+      "cobertura": "completa",
       "modalidade": "presencial",
       "local": null,
-      "nOrais": 34,
-      "nPosteres": 29,
-      "nTrabalhos": 77,
+      "nOrais": 35,
+      "nPosteres": 32,
+      "nTrabalhos": 67,
       "nDias": 5
     },
     {
@@ -59,9 +59,9 @@
       "cobertura": "programa_autor",
       "modalidade": "presencial",
       "local": null,
-      "nOrais": 24,
+      "nOrais": 25,
       "nPosteres": 39,
-      "nTrabalhos": 72,
+      "nTrabalhos": 64,
       "nDias": 5
     },
     {
@@ -75,9 +75,9 @@
       "cobertura": "programa_autor",
       "modalidade": "presencial",
       "local": null,
-      "nOrais": 31,
-      "nPosteres": 24,
-      "nTrabalhos": 65,
+      "nOrais": 33,
+      "nPosteres": 26,
+      "nTrabalhos": 59,
       "nDias": 5
     },
     {

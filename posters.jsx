@@ -1218,7 +1218,11 @@ function MaterialSuplementar({ t }) {
   );
 }
 
-function TrabalhoLeitura({ t }) {
+/* Estilos do navegador entre trabalhos (← Anterior / Próximo →) na leitura */
+const navLerBtn = (on) => ({ flex:1, minWidth:0, display:"flex", alignItems:"center", gap:9, padding:"11px 14px", borderRadius:12, border:"1px solid #E3EAF2", background: on ? "#fff" : "#F7F9FB", cursor: on ? "pointer" : "default", opacity: on ? 1 : 0.55, fontFamily:"inherit", textAlign:"left" });
+const navLerTitulo = { fontSize:12.5, fontWeight:700, color:"#0C1A2B", lineHeight:1.3, marginTop:2, overflow:"hidden", textOverflow:"ellipsis", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" };
+
+function TrabalhoLeitura({ t, nav }) {
   const cor = AREA_COR[t.area] || C.azul;
   const [apreciarAberto, setApreciarAberto] = useState(false);
   const fotoUrl = t.foto_autores_url || t.foto_autores_dataUrl;
@@ -1294,6 +1298,29 @@ function TrabalhoLeitura({ t }) {
           <Award size={18} color="#fff" /> Apreciar este trabalho
         </button>
       </div>
+      {/* Navegação entre trabalhos do conjunto ativo (busca ou edição).
+         Sem wrap: extremos ficam desabilitados. Mostra o título do vizinho
+         apenas quando ele existe — nunca um campo vazio. */}
+      {nav && (nav.prevId || nav.nextId) && (
+        <div style={{ display:"flex", gap:10, margin:"8px 22px 4px" }}>
+          <button onClick={() => nav.irPara(nav.prevId)} disabled={!nav.prevId} aria-label="Trabalho anterior"
+            style={navLerBtn(!!nav.prevId)}>
+            <ChevronLeft size={20} color={nav.prevId ? C.azul : "#C5D2E0"} style={{ flexShrink:0 }} />
+            <span style={{ minWidth:0, textAlign:"left" }}>
+              <span style={{ display:"block", fontSize:11, fontWeight:800, letterSpacing:0.4, textTransform:"uppercase", color: nav.prevId ? C.ciano : "#9AA8B8" }}>Anterior</span>
+              {nav.prevT && <span style={navLerTitulo}>{nav.prevT.titulo}</span>}
+            </span>
+          </button>
+          <button onClick={() => nav.irPara(nav.nextId)} disabled={!nav.nextId} aria-label="Próximo trabalho"
+            style={{ ...navLerBtn(!!nav.nextId), justifyContent:"flex-end" }}>
+            <span style={{ minWidth:0, textAlign:"right" }}>
+              <span style={{ display:"block", fontSize:11, fontWeight:800, letterSpacing:0.4, textTransform:"uppercase", color: nav.nextId ? C.ciano : "#9AA8B8" }}>Próximo</span>
+              {nav.nextT && <span style={navLerTitulo}>{nav.nextT.titulo}</span>}
+            </span>
+            <ChevronRight size={20} color={nav.nextId ? C.azul : "#C5D2E0"} style={{ flexShrink:0 }} />
+          </button>
+        </div>
+      )}
       <div style={{ borderTop:"1px solid #EEF2F6", padding:"18px 22px 30px", textAlign:"center" }}>
         <div style={{ fontSize:15, fontWeight:800, color:C.azul, letterSpacing:0.5 }}>SAM · MEDICINA UNIDAVI</div>
         <div style={{ fontSize:12, color:C.cinza, marginTop:4 }}>XI Semana Acadêmica da Medicina · 2026</div>

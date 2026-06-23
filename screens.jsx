@@ -110,6 +110,11 @@ function Home() {
     });
     return out;
   }, [buscaNorm]);
+  // Ordem dos resultados da busca (só os que têm trabalho) → conjunto de navegação
+  const idsBusca = useMemo(
+    () => resultados.map((r) => casarTrabalho(r.it, trabalhos)).filter(Boolean).map((t) => String(t.id)),
+    [resultados, trabalhos]
+  );
   // modo painel: cicla os dias sozinho (~20s), sem necessidade de toque
   useEffect(() => {
     if (!painel) return;
@@ -210,7 +215,7 @@ function Home() {
                   </>
                 );
                 return t ? (
-                  <button key={r.tipo + r.dia + i} className="card-link" onClick={() => go("#/trabalho/" + t.id)} style={card}>{corpo}</button>
+                  <button key={r.tipo + r.dia + i} className="card-link" onClick={() => { samDefinirConjuntoNav({ origem: "busca", ids: idsBusca }); go("#/trabalho/" + t.id); }} style={card}>{corpo}</button>
                 ) : (
                   <div key={r.tipo + r.dia + i} style={card}>{corpo}</div>
                 );
@@ -281,7 +286,7 @@ function Home() {
               </>
             );
             return t ? (
-              <button key={p.n} className="card-link fade-troca" onClick={() => go("#/trabalho/" + t.id)} style={card}>{corpo}</button>
+              <button key={p.n} className="card-link fade-troca" onClick={() => { samDefinirConjuntoNav(null); go("#/trabalho/" + t.id); }} style={card}>{corpo}</button>
             ) : (
               <div key={p.n} style={card}>{corpo}</div>
             );
@@ -333,12 +338,21 @@ function Home() {
                       <span style={{ fontSize:11.5, color:"#9AA8B8", whiteSpace:"nowrap" }}>em breve</span>
                     </div>
                   )}
+                  {o.yt && (
+                    <span role="link" tabIndex={0}
+                      onClick={(e) => { e.stopPropagation(); window.open(o.yt, "_blank", "noopener"); }}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); window.open(o.yt, "_blank", "noopener"); } }}
+                      style={{ display:"inline-flex", alignItems:"center", gap:6, marginTop:9, background:"#FFEBEB", color:"#CC0000", borderRadius:8, padding:"5px 11px", fontWeight:700, fontSize:12, cursor:"pointer" }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="#CC0000" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z"/></svg>
+                      Assistir à apresentação
+                    </span>
+                  )}
                 </div>
                 {t && <ChevronRight size={18} color={C.ciano} style={{ alignSelf:"center", flexShrink:0 }} />}
               </>
             );
             return t ? (
-              <button key={o.tc} className="card-link fade-troca" onClick={() => go("#/trabalho/" + t.id)} style={card}>{corpo}</button>
+              <button key={o.tc} className="card-link fade-troca" onClick={() => { samDefinirConjuntoNav(null); go("#/trabalho/" + t.id); }} style={card}>{corpo}</button>
             ) : (
               <div key={o.tc} style={card}>{corpo}</div>
             );
@@ -384,6 +398,22 @@ function PaginaTrabalho({ id, tv }) {
   // Modo TV (flag na URL #/trabalho/:id/tv): pôster horizontal inteiro, sem rolar.
   // Sem o flag: leitura 1 coluna rolável (monitor e celular).
   const poster = !!tv;
+  // Navegação ← Anterior / Próximo → no conjunto ativo (busca ou edição).
+  const { prevId, nextId } = navVizinhos(id, trabalhos);
+  const irPara = (tid) => { if (tid) go("#/trabalho/" + tid); };
+  // Setas do teclado replicam a navegação (desktop). Ignora quando digitando.
+  useEffect(() => {
+    if (poster) return;
+    const onKey = (e) => {
+      const tag = (e.target && e.target.tagName) || "";
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(tag) || (e.target && e.target.isContentEditable)) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "ArrowLeft" && prevId) { e.preventDefault(); irPara(prevId); }
+      else if (e.key === "ArrowRight" && nextId) { e.preventDefault(); irPara(nextId); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [prevId, nextId, poster]);
   const t = trabalhoNaLista(trabalhos, id);
   if (!t) {
     if (status === "carregando") return (
@@ -416,6 +446,8 @@ function PaginaTrabalho({ id, tv }) {
     );
   }
   const cor = AREA_COR[t.area] || C.ciano;
+  const prevT = prevId ? trabalhoNaLista(trabalhos, prevId) : null;
+  const nextT = nextId ? trabalhoNaLista(trabalhos, nextId) : null;
 
   if (poster) {
     return (
@@ -442,17 +474,24 @@ function PaginaTrabalho({ id, tv }) {
               <span style={{ overflow:"hidden", textOverflow:"ellipsis" }}>{t.area}</span>
             </div>
           </div>
+          {/* Navegação compacta na barra: anterior / próximo no conjunto ativo */}
+          <div style={{ display:"flex", gap:4, flexShrink:0 }}>
+            <button onClick={() => irPara(prevId)} disabled={!prevId} aria-label="Trabalho anterior" style={barNavBtn(!!prevId)}><ChevronLeft size={20} color="#fff" /></button>
+            <button onClick={() => irPara(nextId)} disabled={!nextId} aria-label="Próximo trabalho" style={barNavBtn(!!nextId)}><ChevronRight size={20} color="#fff" /></button>
+          </div>
         </div>
       </div>
 
       {/* Conteúdo rolável sob a barra */}
       <div style={{ maxWidth:640, margin:"16px auto 30px", borderRadius:14, overflow:"hidden", boxShadow:"0 8px 30px rgba(2,40,90,0.08)" }}>
-        <TrabalhoLeitura t={t} />
+        <TrabalhoLeitura t={t} nav={{ prevId, nextId, prevT, nextT, irPara }} />
       </div>
     </div>
   );
 }
 const posterCtrlBtn = { display:"flex", alignItems:"center", gap:7, height:40, padding:"0 16px", borderRadius:10, border:"1px solid rgba(255,255,255,0.22)", background:"rgba(255,255,255,0.12)", backdropFilter:"blur(6px)", color:"#fff", cursor:"pointer", fontFamily:"inherit", fontSize:14, fontWeight:700 };
+/* Botão compacto de navegação na barra azul (anterior/próximo) */
+const barNavBtn = (on) => ({ flexShrink:0, width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", border:"1px solid rgba(255,255,255,0.28)", background: on ? "rgba(255,255,255,0.14)" : "transparent", color:"#fff", borderRadius:9, cursor: on ? "pointer" : "default", opacity: on ? 1 : 0.32, padding:0 });
 
 /* ---------------- TELÃO DA ESTAÇÃO (#/estacao/{n}) ---------------- */
 function Telao({ estacao }) {

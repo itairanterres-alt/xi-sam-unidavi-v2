@@ -220,6 +220,56 @@ function useTrabalhos() {
 const trabalhoNaLista = (lista, id) => (lista || []).find((t) => String(t.id) === String(id));
 
 /* ============================================================
+   NAVEGAÇÃO ENTRE TRABALHOS (← Anterior / Próximo →)
+   Conjunto ativo guardado EM MEMÓRIA (não persiste): ao navegar a
+   partir da busca, guardamos a ordem dos resultados; em refresh ou
+   link direto a memória zera → cai no conjunto da EDIÇÃO inteira.
+   Nunca cruza edição (o programa é só da XI; a busca "nesta edição"
+   também). Sem wrap: extremos retornam null.
+   ============================================================ */
+let _samConjuntoNav = null;   // { origem:"busca", ids:[...] } | null
+function samDefinirConjuntoNav(c) { _samConjuntoNav = c || null; }
+function samConjuntoNav() { return _samConjuntoNav; }
+
+/* Ordem padrão da EDIÇÃO: percorre os dias do programa e, em cada dia,
+   pôsteres e depois orais (ordem de exibição na Home), resolvendo cada
+   item do programa no trabalho liberado. Só entram os que têm trabalho
+   (têm página); ids únicos preservando a primeira ocorrência. */
+function idsDaEdicao(trabalhos) {
+  const ids = [];
+  const vistos = new Set();
+  const dias = (typeof window !== "undefined" && window.DIAS) || [];
+  const programa = (typeof window !== "undefined" && window.PROGRAMA) || {};
+  dias.forEach((dd) => {
+    const pg = programa[dd]; if (!pg) return;
+    const itens = [...(pg.posteres || []), ...(pg.orais || [])];
+    itens.forEach((it) => {
+      const t = casarTrabalho(it, trabalhos);
+      if (t && !vistos.has(String(t.id))) { vistos.add(String(t.id)); ids.push(String(t.id)); }
+    });
+  });
+  return ids;
+}
+
+/* Resolve os vizinhos do trabalho atual no conjunto ativo.
+   Retorna { ids, idx, prevId, nextId } — prevId/nextId podem ser null. */
+function navVizinhos(id, trabalhos) {
+  const conj = samConjuntoNav();
+  let ids;
+  if (conj && conj.origem === "busca" && Array.isArray(conj.ids) && conj.ids.includes(String(id))) {
+    ids = conj.ids.map(String);
+  } else {
+    ids = idsDaEdicao(trabalhos);
+  }
+  const idx = ids.indexOf(String(id));
+  return {
+    ids, idx,
+    prevId: idx > 0 ? ids[idx - 1] : null,
+    nextId: idx >= 0 && idx < ids.length - 1 ? ids[idx + 1] : null,
+  };
+}
+
+/* ============================================================
    CASAMENTO DE NOMES — programa × trabalhos liberados.
    Tolerante a acento, pontuação, nome do meio, ordem trocada e
    pequenos erros de digitação. Na dúvida (empate), NÃO casa.
@@ -378,6 +428,7 @@ Object.assign(window, {
   Microscope, Stethoscope, ImageIcon, Coffee, Mic, Users, UserRound, Award, ArrowLeft,
   Lock, Play, Pause, SkipForward, X, Upload, Headphones, ListChecks, Layers, RotateCw, Check, QRCode, qrUrlFor, useHashRoute, useScale, useWide, useFit, usePosterMode,
   SAM_API_URL, useTrabalhos, trabalhoNaLista, normalizaNome, similaridadeNomes, casarTrabalho,
+  samDefinirConjuntoNav, samConjuntoNav, idsDaEdicao, navVizinhos,
   nomesCompativeis, nomeApresentador, nomeLimpoAutor,
   Carregando, EstadoVazio, FRASE_SEM_TRABALHOS,
 });
