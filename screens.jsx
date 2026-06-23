@@ -91,8 +91,14 @@ function ArquivoEdicoes() {
 
 function Home() {
   const painel = useMemo(_samPainelAtivo, []);
-  // em modo painel, destaca o dia atual primeiro (se o evento estiver acontecendo)
-  const [dia, setDia] = useState(() => (painel && _samDiaDeHoje()) || DIAS[0]);
+  // Abre no dia de hoje quando a visita acontece DENTRO da semana do evento
+  // (22–26/06/2026); fora dessa janela, abre no padrão (1º dia, 22/06).
+  // Em modo painel (telão), sempre tenta começar no dia de hoje.
+  const [dia, setDia] = useState(() => {
+    const hoje = _samDiaDeHoje();                                  // dia de DIAS cujo DD/MM bate com hoje, ou null
+    const naSemana = hoje && new Date().getFullYear() === 2026;    // 22–26/06/2026
+    return (painel && hoje) || (naSemana && hoje) || DIAS[0];
+  });
   const [filtro, setFiltro] = useState("Todos");
   const [busca, setBusca] = useState(() => { try { return new URLSearchParams(window.location.search).get("q") || ""; } catch (e) { return ""; } });
   const [escopo, setEscopo] = useState("edicao");        // "edicao" (XI) | "todas" (arquivo)

@@ -189,13 +189,15 @@ function RolesTrabalho({ t }) {
 
 /* ============================================================
    CARD DE TRABALHO — abre/fecha (acordeão) para revelar papéis.
-   poster_tc1 nunca exibe vídeo (regra do evento).
+   Botão "Assistir à apresentação": aparece em todo card que tenha
+   videoUrl preenchido (link do YouTube já no timestamp do trabalho);
+   sem videoUrl, o botão é simplesmente omitido. Visível sempre,
+   independente do acordeão estar aberto.
    ============================================================ */
 function CardTrabalho({ t, ordem }) {
   const [aberto, setAberto] = useState(false);
   const cor = corArea(t.area);
-  const oral = t.camada === "oral_tc2";
-  const temVideo = oral && !!t.videoUrl;
+  const temVideo = !!t.videoUrl;
   const autor = _val(t.autor);
   const temPapeis = !!(_val(t.orientador) || _lista(t.coorientadores).length || _val(t.profUc) || _val(t.avaliador) || _lista(t.colaboradores).length);
   return (
@@ -223,13 +225,15 @@ function CardTrabalho({ t, ordem }) {
       {aberto && temPapeis ? (
         <div style={{ padding:"0 17px 16px" }}>
           <RolesTrabalho t={t} />
-          {temVideo ? (
-            <a href={t.videoUrl} target="_blank" rel="noopener noreferrer"
-              style={{ display:"inline-flex", alignItems:"center", gap:8, marginTop:14, textDecoration:"none", background:"#FF0000", color:"#fff", borderRadius:9, padding:"8px 14px", fontWeight:700, fontSize:13 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z"/></svg>
-              Assistir à apresentação
-            </a>
-          ) : null}
+        </div>
+      ) : null}
+      {temVideo ? (
+        <div style={{ padding:"0 17px 16px" }}>
+          <a href={t.videoUrl} target="_blank" rel="noopener noreferrer"
+            style={{ display:"inline-flex", alignItems:"center", gap:8, textDecoration:"none", background:"#FF0000", color:"#fff", borderRadius:9, padding:"8px 14px", fontWeight:700, fontSize:13 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z"/></svg>
+            Assistir à apresentação
+          </a>
         </div>
       ) : null}
     </div>
