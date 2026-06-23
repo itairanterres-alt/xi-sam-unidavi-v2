@@ -95,6 +95,15 @@ function Home() {
   // (22–26/06/2026); fora dessa janela, abre no padrão (1º dia, 22/06).
   // Em modo painel (telão), sempre tenta começar no dia de hoje.
   const [dia, setDia] = useState(() => {
+    // Em painel (telão) o dia é sempre derivado de hoje e auto-rotaciona.
+    // Fora do painel, restaura o último dia que o usuário escolheu nesta
+    // sessão (ex.: ao voltar da página de um trabalho), senão usa a heurística.
+    if (!painel) {
+      try {
+        const salvo = sessionStorage.getItem("sam_dia");
+        if (salvo && DIAS.includes(salvo)) return salvo;
+      } catch (e) {}
+    }
     const hoje = _samDiaDeHoje();                                  // dia de DIAS cujo DD/MM bate com hoje, ou null
     const naSemana = hoje && new Date().getFullYear() === 2026;    // 22–26/06/2026
     return (painel && hoje) || (naSemana && hoje) || DIAS[0];
@@ -234,7 +243,7 @@ function Home() {
         <>
         <div style={{ display:"flex", gap:6, marginBottom:14, flexWrap:"wrap", alignItems:"center" }}>
           {DIAS.map((dd) => (
-            <button key={dd} onClick={() => { setDia(dd); setFiltro("Todos"); }} style={{ border:"none", borderRadius:999, padding:"11px 16px", fontSize:13, fontWeight:600, cursor:"pointer", background:dd===dia?C.azul:"#fff", color:dd===dia?"#fff":C.cinza, boxShadow:dd===dia?"none":"inset 0 0 0 1px #E3EAF2" }}>{dd}</button>
+            <button key={dd} onClick={() => { setDia(dd); setFiltro("Todos"); try { sessionStorage.setItem("sam_dia", dd); } catch (e) {} }} style={{ border:"none", borderRadius:999, padding:"11px 16px", fontSize:13, fontWeight:600, cursor:"pointer", background:dd===dia?C.azul:"#fff", color:dd===dia?"#fff":C.cinza, boxShadow:dd===dia?"none":"inset 0 0 0 1px #E3EAF2" }}>{dd}</button>
           ))}
           {/* Botão “Assistir ao vivo” do DIA — só quando PROGRAMA[dia].youtube tem link */}
           {d.youtube ? (
