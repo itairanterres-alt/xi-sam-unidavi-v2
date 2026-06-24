@@ -1137,26 +1137,131 @@ function MathText({ children }) {
     return <React.Fragment key={k}>{_texParaTexto(p.tex)}</React.Fragment>;
   });
 }
+/* ===== FLASHCARDS — modo estudo leve e gamificado =====
+   Tudo STATELESS (só useState; some ao recarregar). Embaralha ao abrir;
+   "Lembrei" tira o card; "Não lembrei" manda pra repescagem. Quando a pilha
+   acaba, abre automaticamente a rodada de revisão só com os que faltaram
+   (re-embaralhados), repetindo até zerar. Sem login/persistência. */
+const _fcEmbaralha = (arr) => {
+  const a = arr.slice();
+  for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); const tmp = a[k]; a[k] = a[j]; a[j] = tmp; }
+  return a;
+};
+const _fcVerde = "#1F8A5B", _fcVermelho = "#C0392B";
+const _fcEstiloFlip = `
+  .fcs-carta{ border:1px solid #E3EAF2; border-radius:16px; padding:32px 22px; min-height:208px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+    cursor:pointer; transform-origin:center; -webkit-tap-highlight-color:transparent;
+    transition:transform .18s ease, background .18s ease; }
+  .fcs-carta.fcs-squish{ transform:scaleX(0); }
+  @media (prefers-reduced-motion: reduce){ .fcs-carta{ transition:background .18s ease; } .fcs-carta.fcs-squish{ transform:none; } }
+`;
 function Flashcards({ cards }) {
   useKatexPronto();
-  const [i, setI] = React.useState(0);
-  const [virado, setVirado] = React.useState(false);
-  const card = cards[i];
-  const ir = (d) => { setVirado(false); setI((x) => (x + d + cards.length) % cards.length); };
+  const total = cards.length;
+  const baralhoBase = React.useMemo(() => cards.map((c, _i) => ({ ...c, _i })), [cards]);
+  const novaSessao = React.useCallback(() => ({
+    fila: _fcEmbaralha(baralhoBase), idx: 0, virado: false, animando: false,
+    repescagem: [], rodada: 1, falharam: {}, fim: false,
+  }), [baralhoBase]);
+  const [s, setS] = React.useState(novaSessao);
+  const { fila, idx, virado, animando, repescagem, rodada, falharam, fim } = s;
+  const card = fila[idx];
+  const flipTimer = React.useRef(0);
+  React.useEffect(() => () => clearTimeout(flipTimer.current), []);
+
+  const responder = (lembrou) => {
+    if (animando) return;
+    const atual = fila[idx];
+    const novaRep = lembrou ? repescagem : repescagem.concat([atual]);
+    const novosFalharam = lembrou ? falharam : { ...falharam, [atual._i]: true };
+    if (idx + 1 < fila.length) {
+      setS({ ...s, idx: idx + 1, virado: false, repescagem: novaRep, falharam: novosFalharam });
+    } else if (novaRep.length === 0) {
+      setS({ ...s, virado: false, repescagem: [], falharam: novosFalharam, fim: true });
+    } else {
+      setS({ ...s, fila: _fcEmbaralha(novaRep), idx: 0, virado: false, repescagem: [], rodada: rodada + 1, falharam: novosFalharam });
+    }
+  };
+
+  if (fim) {
+    const reviram = Object.keys(falharam).length;
+    const primeira = total - reviram;
+    return (
+      <div style={{ textAlign:"center", padding:"22px 16px" }}>
+        <div style={{ fontSize:12, fontWeight:800, textTransform:"uppercase", letterSpacing:0.8, color:C.cinza, marginBottom:10 }}>Sessão concluída</div>
+        <div style={{ width:64, height:64, borderRadius:"50%", background:C.cianoClaro, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}>
+          <Check size={34} color={_fcVerde} />
+        </div>
+        <div style={{ fontSize:15, color:C.cinza, fontWeight:600 }}>Você dominou</div>
+        <div style={{ fontSize:46, fontWeight:800, color:C.azul, lineHeight:1.05, margin:"2px 0 10px" }}>{total}/{total}</div>
+        <div style={{ fontSize:14.5, color:C.cinza, lineHeight:1.5 }}>
+          {reviram === 0
+            ? "Todas de primeira — mandou bem!"
+            : <><strong style={{ color:C.tinta }}>{primeira}</strong> de primeira, <strong style={{ color:C.tinta }}>{reviram}</strong> na revisão</>}
+        </div>
+        <div style={{ display:"flex", justifyContent:"center", marginTop:20 }}>
+          <button onClick={() => setS(novaSessao())} style={{ ..._matNavBtn, padding:"13px 22px", fontSize:14.5 }}><RotateCw size={16} /> Refazer</button>
+        </div>
+      </div>
+    );
+  }
+
+  const feitos = idx;                      // cards já respondidos nesta rodada
+  const pct = Math.round((feitos / fila.length) * 100);
+  const flip = () => {
+    if (animando) return;
+    setS((p) => ({ ...p, animando: true }));
+    clearTimeout(flipTimer.current);
+    flipTimer.current = setTimeout(() => setS((q) => ({ ...q, virado: !q.virado, animando: false })), 170);
+  };
+
   return (
     <div>
-      <div onClick={() => setVirado((v) => !v)} role="button" tabIndex={0}
-        onKeyDown={(e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); setVirado((v) => !v); } }}
-        style={{ cursor:"pointer", border:"1px solid #E3EAF2", borderRadius:14, padding:"34px 24px", minHeight:160, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", textAlign:"center", background: virado ? C.cianoClaro : "#fff", transition:"background .15s ease" }}>
-        <div style={{ fontSize:11, fontWeight:800, letterSpacing:0.8, textTransform:"uppercase", color: virado ? C.ciano : C.cinza, marginBottom:12 }}>{virado ? "Verso" : "Frente"}</div>
-        <div style={{ fontSize:17, lineHeight:1.45, color:C.tinta, fontWeight: virado ? 400 : 600 }}><MathText>{virado ? card.verso : card.frente}</MathText></div>
-        <div style={{ marginTop:16, fontSize:12, color:C.cinza, display:"flex", alignItems:"center", gap:6 }}><RotateCw size={13} color={C.cinza} /> toque para virar</div>
+      <style>{_fcEstiloFlip}</style>
+      {/* progresso + contagem (na revisão, reflete o subconjunto) */}
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:7, gap:10 }}>
+        {rodada > 1
+          ? <span style={{ fontSize:11.5, fontWeight:800, textTransform:"uppercase", letterSpacing:0.5, color:C.ciano, display:"inline-flex", alignItems:"center", gap:6 }}><RotateCw size={13} color={C.ciano} /> {fila.length === 1 ? "Revisando o card que faltou" : `Revisando os ${fila.length} que faltaram`}</span>
+          : <span style={{ fontSize:11.5, fontWeight:800, textTransform:"uppercase", letterSpacing:0.5, color:C.cinza }}>Estudo</span>}
+        <span style={{ fontSize:13, fontWeight:700, color:C.cinza, whiteSpace:"nowrap" }}>{feitos} de {fila.length}</span>
       </div>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:14 }}>
-        <button onClick={() => ir(-1)} style={_matNavBtn}><ChevronLeft size={16} /> Anterior</button>
-        <span style={{ fontSize:13, fontWeight:700, color:C.cinza }}>{i + 1}/{cards.length}</span>
-        <button onClick={() => ir(1)} style={_matNavBtn}>Próximo <ChevronRight size={16} /></button>
+      <div style={{ height:8, borderRadius:999, background:"#E3EAF2", overflow:"hidden", marginBottom:16 }}>
+        <div style={{ height:"100%", width:`${pct}%`, borderRadius:999, background:`linear-gradient(90deg, ${C.azul}, ${C.ciano})`, transition:"width .3s ease" }} />
       </div>
+
+      {/* card com flip discreto (squish) */}
+      <div className="fcs-cena">
+        <div className={"fcs-carta" + (animando ? " fcs-squish" : "")} onClick={flip} role="button" tabIndex={0}
+          aria-label={virado ? "Verso do card" : "Frente do card — toque para virar"}
+          onKeyDown={(e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); } }}
+          style={{ background: virado ? C.cianoClaro : "#fff" }}>
+          <div style={{ fontSize:11, fontWeight:800, letterSpacing:0.8, textTransform:"uppercase", color: virado ? C.ciano : C.cinza, marginBottom:12 }}>{virado ? "Verso" : "Frente"}</div>
+          <div style={{ fontSize:18, lineHeight:1.45, color:C.tinta, fontWeight: virado ? 400 : 600 }}><MathText>{virado ? card.verso : card.frente}</MathText></div>
+          {!virado && <div style={{ marginTop:18, fontSize:12, color:C.cinza, display:"flex", alignItems:"center", gap:6 }}><RotateCw size={13} color={C.cinza} /> toque para virar</div>}
+        </div>
+      </div>
+
+      {/* ações: só aparecem no verso */}
+      {virado ? (
+        <div style={{ display:"flex", gap:10, marginTop:16 }}>
+          <button onClick={() => responder(false)}
+            style={{ flex:1, minHeight:54, display:"inline-flex", alignItems:"center", justifyContent:"center", gap:8, border:`1.5px solid ${_fcVermelho}`, background:"#fff", color:_fcVermelho, borderRadius:12, fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
+            <X size={18} color={_fcVermelho} /> Não lembrei
+          </button>
+          <button onClick={() => responder(true)}
+            style={{ flex:1, minHeight:54, display:"inline-flex", alignItems:"center", justifyContent:"center", gap:8, border:"none", background:_fcVerde, color:"#fff", borderRadius:12, fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
+            <Check size={18} color="#fff" /> Lembrei
+          </button>
+        </div>
+      ) : (
+        <div style={{ display:"flex", justifyContent:"center", marginTop:16 }}>
+          <button onClick={flip}
+            style={{ minHeight:54, padding:"0 26px", display:"inline-flex", alignItems:"center", justifyContent:"center", gap:8, border:"none", background:C.azul, color:"#fff", borderRadius:12, fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
+            Ver resposta
+          </button>
+        </div>
+      )}
     </div>
   );
 }
