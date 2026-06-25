@@ -247,11 +247,11 @@
       "profUc": null,
       "avaliador": null,
       "colaboradores": [],
-      "resumo": null,
+      "resumo": "The neutrophil-lymphocyte ratio (NLR), the platelet-lymphocyte ratio (PLR), the lymphocyte-monocyte ratio (LMR), the neutrophil-monocyte ratio (NMR) and the systemic immune inflammation index (SII) are associated with clinical outcomes in oncological diseases, cardiovascular diseases, infectious / inflammatory diseases, endocrinological, pulmonary and brain injuries. Here, we investigate its association with hospital mortality in patients with severe traumatic brain injury. We retrospectively reviewed clinical data from patients with severe traumatic brain injury (sTBI) who were treated in our department between January 2015 and December 2020. NLR, PLR, NMR, LMR and SII data were collected between admission and day 3, as well as other indicators related. The relationship between hematological ratios and in-hospital mortality were analyzed. A total of 96 patients were included in study, hospital mortality was 40.6% (N.=39). The levels of NLR on admission (D0), NLR day 1 (D1), NLR day 2 (D2), NLR day 3 (D3), NMR day 1 (D1) and NMR day (2) remained significantly higher in patients with death intra-hospital (P=0.030; P=0.038; P=0.016; P=0.048; P=0.046 and P=0.001, respectively). Multivariate logistic analysis showed that higher NLR values at admission and day 2 NMR were associated with in-hospital mortality (OR=1.120, P=0.037; and OR=1.307, P=0.004, respectively). Analysis of the recipient operating characteristic (ROC) curve showed that the NLR on admission had a sensitivity of 59.0% and a specificity of 66.7% (area under the curve 0.630, P=0.031, Youden's Index 0.26) and the NMR of day 2 had a sensitivity of 67.7% and a specificity of 70.4% (area under the curve 0.719, P=0.001, Youden's index 0.38) to predict mortality intra-hospital based on the best threshold. Our analysis indicates that higher NLR levels on admission and day 2 NMR are independent predictors of in-hospital mortality in patients with sTBI.",
       "videoUrl": null,
-      "linkArtigo": null,
+      "linkArtigo": "https://doi.org/10.23736/S0390-5616.23.05877-0",
       "linkPoster": null,
-      "publicacao": null,
+      "publicacao": "Matias LF, Pimentel MD, Medeiros MF, Rocha FR, Gambetta MV, Lopes SC. Predictive value of neutrophil-to-lymphocyte ratio and neutrophil-to-monocyte ratio in severe traumatic brain injury: a retrospective cohort. J Neurosurg Sci. 2023;68(5):604-611.",
       "statusCuradoria": "pendente"
     },
     {
@@ -311,11 +311,11 @@
       "profUc": null,
       "avaliador": null,
       "colaboradores": [],
-      "resumo": null,
+      "resumo": "Controladores de elite do HIV correspondem a menos de 1% dos indivíduos infectados com HIV. Eles são capazes, sem a utilização da terapia antirretroviral, de controlar a viremia de maneira que os níveis de cópias virais fiquem indetectáveis por testes convencionais, mantendo, também, os níveis de linfócitos T CD4+ normais. Este relato visa descrever dois casos de pacientes controladores de elite, uma com 41 anos que, inicialmente, chegou a utilizar a terapia antirretroviral e outra com 70 anos, a qual nunca fez uso da terapia antirretroviral. Ambas preencheram os critérios para serem consideradas controladoras de elite do HIV e, até o presente momento, as mesmas continuam apresentando a carga viral indetectável (<50 cópias/mL) e os níveis de linfócitos T CD4+ normais (≥500 células/µL).",
       "videoUrl": null,
-      "linkArtigo": null,
+      "linkArtigo": "https://doi.org/10.63845/6dmrbg62",
       "linkPoster": null,
-      "publicacao": null,
+      "publicacao": "Köhler MH, Schmidt Ramos PH, Reis T, Rocha FRR, Michels AC. Controladores de elite do HIV: relato de casos. Arq Catarin Med. 2022;51(3):96-102.",
       "statusCuradoria": "pendente"
     },
     {

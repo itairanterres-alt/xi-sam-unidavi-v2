@@ -98,11 +98,11 @@
         "Marcelo Vier Gambetta",
         "Helena Schell dos Santos"
       ],
-      "resumo": null,
+      "resumo": "The comparative effects of mineralocorticoid receptor antagonists (MRAs) in heart failure with preserved ejection fraction (HFpEF) or mildly reduced ejection fraction (HFmrEF) remain uncertain, including potential differences between steroidal MRAs and finerenone. This Bayesian network meta-analysis aimed to compare the efficacy and safety of finerenone, eplerenone, and spironolactone vs placebo in HFpEF/HFmrEF. [Resumo parcial — abstract completo (métodos/resultados/conclusões) sob paywall na European Journal of Heart Failure; completar via PubMed/Europe PMC.]",
       "videoUrl": "https://www.youtube.com/watch?v=CVRRehUxu7o",
-      "linkArtigo": null,
+      "linkArtigo": "https://doi.org/10.1093/ejhf/xuag083",
       "linkPoster": null,
-      "publicacao": null,
+      "publicacao": "Bagattoli V, Schell dos Santos H, Giorgi J, Gomes Batista P, Lopes SC, Gambetta MV, Bacca COF. Finerenone, eplerenone, and spironolactone in heart failure with preserved ejection fraction: a Bayesian network meta-analysis of efficacy and safety. Eur J Heart Fail. 2026;xuag083.",
       "statusCuradoria": "pendente"
     },
     {
@@ -303,11 +303,11 @@
         "Natália Gabriel da Cruz",
         "Gabriel Riffel"
       ],
-      "resumo": null,
+      "resumo": "Os tricobezoares são massas formadas predominantemente por cabelos, que se acumulam no trato gastrointestinal, caracterizando-se como uma condição rara e potencialmente grave, especialmente na população pediátrica. A apresentação clínica costuma ser insidiosa, podendo evoluir para complicações graves, como obstrução ou perfuração intestinal. Outra etiologia incomum para obstrução intestinal é a helmintíase, caracterizada como um grupo de doenças parasitárias intestinais, sendo causada, principalmente, pelo Ascaris lumbricoides. O presente estudo tem como objetivo relatar um caso de tricobezoar em uma menina de cinco anos inicialmente diagnosticada com suboclusão intestinal por ascaridíase. O diagnóstico inicial foi realizado baseado na clínica e no exame de imagem, que eram compatíveis com a hipótese de obstrução intestinal secundária à ascaridíase. No entanto, o diagnóstico definitivo de tricobezoar e o tratamento foram realizados apenas durante a intervenção cirúrgica. Este relato reforça a relevância do diagnóstico diferencial das causas raras de abdome agudo obstrutivo em crianças, destacando a importância da suspeição clínica e do manejo multidisciplinar para o diagnóstico precoce e o tratamento adequado dessas condições.",
       "videoUrl": "https://www.youtube.com/watch?v=o-sRP2xf1g0",
-      "linkArtigo": null,
+      "linkArtigo": "https://doi.org/10.63845/k0s0a505",
       "linkPoster": null,
-      "publicacao": null,
+      "publicacao": "Benvenutti MRA, Rocha FRR, Benvenutti ACA, Riffel G, Schlichting LB, Cruz NG, Vieira AM. Tricofagia e obstrução intestinal por tricobezoar: um relato de caso inicialmente interpretado como helmintíase. Arq Catarin Med. 2026;55(2):297-306.",
       "statusCuradoria": "pendente"
     },
     {
@@ -438,7 +438,7 @@
       "colaboradores": [
         "Franciani Rodrigues da Rocha"
       ],
-      "resumo": null,
+      "resumo": "De acordo com a Sociedade Brasileira de Diabetes, o Diabetes Mellitus (DM) configurou-se como uma desordem metabólica de natureza crônica, caracterizou-se pela hiperglicemia persistente, resultante de uma deficiência relativa ou absoluta na secreção de insulina, na sua ação periférica, ou ainda em ambos os mecanismos fisiopatológicos simultaneamente. Informações divulgadas pela Federação Internacional de Diabetes, no ano de 2017, apontaram que o Brasil ocupou a quarta posição no ranking mundial em número de adultos entre 20 e 79 anos acometidos por essa enfermidade, totalizando aproximadamente 12,5 milhões de indivíduos afetados. O controle adequado do Diabetes Mellitus exigiu uma abordagem ampla e sistemática, composta por práticas integradas de cuidado clínico e de autocuidado, sendo ainda mais rigorosa entre aqueles que fizeram uso contínuo de insulina. Observou-se que pacientes insulinodependentes — ou seus cuidadores — frequentemente cometeram equívocos no manejo da terapia insulínica, o que pôde comprometer seriamente a eficácia do tratamento e a qualidade de vida dos indivíduos. Neste contexto, o objetivo central da presente investigação consistiu em analisar o grau de conhecimento e a familiaridade dos profissionais médicos, responsáveis pela prescrição de insulina nas unidades de saúde, com relação aos protocolos e diretrizes clínicas que orientaram a insulinoterapia. A pesquisa assumiu um delineamento de intervenção, com abordagem quantitativa, do tipo antes e depois, tendo como público-alvo os médicos prescritores de insulina atuantes no município de Rio do Sul. Esperou-se, por meio desta iniciativa, promover uma intervenção educativa capaz de proporcionar avanços significativos no entendimento e na aplicação das boas práticas referentes ao manejo adequado da insulina, contribuindo assim para a qualificação do cuidado prestado às pessoas com Diabetes Mellitus",
       "videoUrl": "https://www.youtube.com/watch?v=wLaoz5pe5AA",
       "linkArtigo": null,
       "linkPoster": null,
@@ -776,7 +776,7 @@
       "profUc": "Samantha Cristiane Lopes",
       "avaliador": null,
       "colaboradores": [],
-      "resumo": null,
+      "resumo": "Contexto: Corticosteroides tópicos são amplamente utilizados no tratamento da psoríase, mas seu uso prolongado pode levar à supressão do eixo hipotálamo-hipófise-adrenal (HPA). A magnitude desse risco permanece incerta. Objetivo: Avaliar, por meio de revisão sistemática e meta-análise, a prevalência de supressão do eixo HPA em pacientes com psoríase tratados com corticosteroides tópicos. Métodos: Foi conduzida uma revisão sistemática e metanálise de ensaios clínicos randomizados. As buscas foram realizadas nas bases PubMed, Embase e Cochrane Library desde a criação das bases até 30 de abril de 2024. Foram incluídos estudos que avaliaram pacientes com psoríase tratados com corticosteroides tópicos e que relataram supressão do eixo HPA confirmada por testes hormonais validados. Dois revisores realizaram, de forma independente, a seleção dos estudos, a extração dos dados e a avaliação do risco de viés utilizando a ferramenta Cochrane RoB 2. As análises foram conduzidas no RStudio e no RevMan, utilizando modelo de efeitos aleatórios. A certeza da evidência foi graduada segundo a abordagem GRADE. O protocolo foi registrado prospectivamente no PROSPERO (número de registro: CRD42024574491; data de registro: 12 de junho de 2024). Resultados: Cinco estudos (n = 290) foram incluídos. A prevalência combinada de supressão do eixo HPA foi de 15% (IC95%: 8%–23%), com heterogeneidade moderada a alta (I² = 65,6%). Embora as estimativas individuais variem entre 0% e 36%, a maioria aponta para algum grau de risco de supressão adrenal, sendo mais elevada em corticosteroides de maior potência, especialmente clobetasol propionato 0,05%. O intervalo de predição foi amplo (0%–46%), sugerindo que o risco real pode variar significativamente conforme a formulação e o contexto clínico. Conclusão: A supressão do eixo HPA em pacientes com psoríase tratados com corticosteroides tópicos é um risco clínico quantificável, com prevalência média de 15%. O risco aumenta com corticosteroides de alta potência e tratamentos prolongados, reforçando a necessidade de monitorização adequada e de estratégias esteroide-poupadoras quando possível",
       "videoUrl": "https://www.youtube.com/watch?v=hY5xW1o8Gic",
       "linkArtigo": null,
       "linkPoster": null,
@@ -845,7 +845,7 @@
       "colaboradores": [
         "Yasmin dos Prazeres Araujo"
       ],
-      "resumo": null,
+      "resumo": "Os insulinomas são tumores neuroendócrinos raros e, na maioria dos casos, benignos, originados das células beta pancreáticas e caracterizados pela secreção autônoma de insulina, responsável por episódios recorrentes de hipoglicemia. O uso de agonistas do receptor do peptídeo-1 semelhante ao glucagon (GLP-1), como a liraglutida, vem crescendo no tratamento do diabetes mellitus tipo 2 e da obesidade. Estes agentes estimulam a secreção de insulina de maneira glicose-dependente e, em situações específicas, podem precipitar ou evidenciar quadros hipoglicêmicos previamente não reconhecidos. Este relato descreve o caso de uma paciente de 24 anos que, após o uso autônomo de liraglutida com o objetivo de manejar um ganho ponderal recente, apresentou episódios recorrentes de hipoglicemia. A investigação revelou níveis inapropriadamente elevados de insulina e peptídeo C frente à hipoglicemia, além de imagem compatível com nódulo hipervascular em cabeça de pâncreas. O tratamento cirúrgico confirmou o diagnóstico de insulinoma e resultou em completa remissão dos sintomas. O caso evidencia que o uso de agonistas do receptor de GLP-1 pode desmascarar insulinomas previamente não diagnosticados, reforçando a importância de uma avaliação criteriosa diante de sintomas de hipoglicemia em pacientes sob uso desses agentes, especialmente na ausência de diabetes mellitus",
       "videoUrl": "https://www.youtube.com/watch?v=hY5xW1o8Gic",
       "linkArtigo": null,
       "linkPoster": null,

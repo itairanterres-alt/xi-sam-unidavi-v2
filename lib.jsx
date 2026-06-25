@@ -38,6 +38,8 @@ const ListChecks= (p) => <Ico {...p}><path d="m3 17 2 2 4-4M3 7l2 2 4-4M13 6h8M1
 const Layers    = (p) => <Ico {...p}><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m6.08 9.5-3.48 1.59a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83L17.92 9.5"/></Ico>;
 const RotateCw  = (p) => <Ico {...p}><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></Ico>;
 const Check     = (p) => <Ico {...p}><path d="M20 6 9 17l-5-5"/></Ico>;
+const BookOpenCheck=(p)=> <Ico {...p}><path d="M12 21V7a2 2 0 0 0-2-2H3a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h6a3 3 0 0 1 3 3 3 3 0 0 1 3-3h6a1 1 0 0 0 1-1v-7"/><path d="m16 12 2 2 4-4"/></Ico>;
+const Presentation=(p)=> <Ico {...p}><path d="M2 3h20M3 3v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V3M12 15v6M9 21h6M8 9l2 2 4-4"/></Ico>;
 
 /* ---------- QR real (aponta para a URL pública do trabalho) ---------- */
 function qrUrlFor(id) {
@@ -426,7 +428,7 @@ function EstadoVazio({ escuro = false, style }) {
 Object.assign(window, {
   Ico, Monitor, Smartphone, CalendarDays, ChevronLeft, ChevronRight, MapPin,
   Microscope, Stethoscope, ImageIcon, Coffee, Mic, Users, UserRound, Award, ArrowLeft,
-  Lock, Play, Pause, SkipForward, X, Upload, Headphones, ListChecks, Layers, RotateCw, Check, QRCode, qrUrlFor, useHashRoute, useScale, useWide, useFit, usePosterMode,
+  Lock, Play, Pause, SkipForward, X, Upload, Headphones, ListChecks, Layers, RotateCw, Check, BookOpenCheck, Presentation, QRCode, qrUrlFor, useHashRoute, useScale, useWide, useFit, usePosterMode,
   SAM_API_URL, useTrabalhos, trabalhoNaLista, normalizaNome, similaridadeNomes, casarTrabalho,
   samDefinirConjuntoNav, samConjuntoNav, idsDaEdicao, navVizinhos,
   nomesCompativeis, nomeApresentador, nomeLimpoAutor,

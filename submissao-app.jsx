@@ -511,6 +511,7 @@ const F_INICIAL = {
   email:"", titulo:"", fase:7, desenho:"Estudo transversal", area:"Endocrinologia",
   autores:"", orientador:"", afiliacao:AFILIACAO_PADRAO, intro:"", objetivos:"", metodos:"",
   resultados:"", conclusao:"", palavras:"", referencias:"", resumo:"",
+  anexarSlides:"nao", slidesUrl:"",
 };
 function SubmissaoApp() {
   const edicao = useMemo(parseEditRoute, []);
@@ -549,6 +550,8 @@ function SubmissaoApp() {
       palavras: Array.isArray(t.palavras) ? t.palavras.join(", ") : (t.palavras || ""),
       referencias: t.referencias || "",
       resumo: t.resumo_completo || "",
+      slidesUrl: (t.material && t.material.slidesUrl) || t.slidesUrl || "",
+      anexarSlides: ((t.material && t.material.slidesUrl) || t.slidesUrl) ? "sim" : "nao",
     }));
     let figs = Array.isArray(t.figuras) ? t.figuras.map(fg=>({ dataUrl: fg.dataUrl || fg.url || "", secao: fg.secao || "Resultados", legenda: fg.legenda || "", titulo: fg.titulo || "" })) : [];
     setAjusteLayout(t.ajuste_layout || "");
@@ -622,6 +625,7 @@ function SubmissaoApp() {
       introducao:f.intro, objetivos:f.objetivos, metodos:f.metodos, resultados:f.resultados,
       conclusao:f.conclusao, palavras:f.palavras, referencias:f.referencias,
       resumo_completo:f.resumo,
+      slidesUrl: f.anexarSlides==="sim" ? f.slidesUrl.trim() : "",
       foto_autores_dataUrl:fotoAutores, fig_principal:principal+1,
       figuras:figuras.map(fg=>({ titulo:fg.titulo||"", secao:fg.secao, legenda:fg.legenda, dataUrl:fg.dataUrl })),
       ajuste_layout: ajusteLayout,
@@ -826,6 +830,28 @@ function SubmissaoApp() {
               Ver meu pôster na TV
             </button>
           </>}
+
+          {/* SLIDES DA APRESENTAÇÃO (opcional) — link manual; entra no material do trabalho */}
+          <div style={{ ...grupo, border:"1px solid #E3EAF2", borderRadius:12, padding:14, marginTop:4 }}>
+            <div style={{ display:"flex", alignItems:"flex-start", gap:9, marginBottom:10 }}>
+              <Presentation size={17} color={C.azul} style={{ marginTop:1, flexShrink:0 }}/>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ ...label, marginBottom:2 }}>Slides da apresentação <span style={{ fontWeight:600, textTransform:"none", letterSpacing:0, color:C.cinza }}>(opcional)</span></div>
+                <div style={{ fontSize:12.5, color:C.cinza, lineHeight:1.45 }}>Deseja anexar os slides? O link aparece no material do trabalho, para quem visita pelo QR.</div>
+              </div>
+            </div>
+            <div style={{ display:"flex", gap:8, marginBottom: f.anexarSlides==="sim" ? 12 : 0 }}>
+              <button type="button" onClick={()=>setF({...f, anexarSlides:"sim"})} style={vchip(f.anexarSlides==="sim")}>Sim</button>
+              <button type="button" onClick={()=>setF({...f, anexarSlides:"nao", slidesUrl:""})} style={vchip(f.anexarSlides==="nao")}>Não</button>
+            </div>
+            {f.anexarSlides==="sim" && (
+              <div>
+                <label style={label}>Link dos slides (PDF ou Google Slides)</label>
+                <input style={campo} value={f.slidesUrl} onChange={set("slidesUrl")} placeholder="Cole o link — ex.: https://drive.google.com/file/d/…  ou  https://docs.google.com/presentation/…"/>
+                <div style={{ fontSize:11.5, color:C.cinza, marginTop:5, lineHeight:1.45 }}>Confira que o compartilhamento esteja como “qualquer pessoa com o link”.</div>
+              </div>
+            )}
+          </div>
 
           <button onClick={enviar} disabled={enviando} style={{ width:"100%", background:enviando?C.cinza:C.azul, color:"#fff", border:"none", borderRadius:10, padding:"12px", fontSize:14.5, fontWeight:700, cursor:enviando?"default":"pointer", marginTop:6, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>{enviando ? <><Loader2 size={17} className="girando"/> Enviando…</> : (edicao ? "Reenviar trabalho" : "Enviar trabalho")}</button>
           {!edicao && <div style={{ fontSize:11.5, color:C.cinza, textAlign:"center", marginTop:9 }}>Rascunho salvo automaticamente neste navegador enquanto você digita.</div>}

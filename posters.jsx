@@ -1070,6 +1070,40 @@ function AudioMaterial({ src, cor }) {
     </div>
   );
 }
+/* Slides da apresentação (PDF / Google Slides). Mesmo padrão do podcast:
+   se for arquivo do Drive, embute o preview oficial; sempre oferece abrir/baixar. */
+function SlidesMaterial({ src, cor }) {
+  const s = String(src || "");
+  const mSlides = s.match(/presentation\/d\/([a-zA-Z0-9_-]+)/);
+  const id = _driveId(src);
+  const embed = mSlides ? `https://docs.google.com/presentation/d/${mSlides[1]}/embed`
+              : id ? `https://drive.google.com/file/d/${id}/preview` : null;
+  const abrir = (
+    <a href={src} target="_blank" rel="noopener noreferrer"
+      style={{ alignSelf:"flex-start", display:"inline-flex", alignItems:"center", gap:6, fontSize:12.5, fontWeight:600, color:C.azul, textDecoration:"none" }}>
+      <Presentation size={13} color={C.azul} /> Abrir em nova aba / baixar
+    </a>
+  );
+  if (embed) {
+    return (
+      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+        <div style={{ borderRadius:12, overflow:"hidden", border:"1px solid #E3EAF2", background:"#F2F5F9", aspectRatio:"16 / 9" }}>
+          <iframe src={embed} title="Slides" allow="autoplay" allowFullScreen
+            style={{ width:"100%", height:"100%", border:"none", display:"block" }} />
+        </div>
+        {abrir}
+      </div>
+    );
+  }
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+      <a href={src} target="_blank" rel="noopener noreferrer"
+        style={{ display:"inline-flex", alignSelf:"flex-start", alignItems:"center", gap:8, textDecoration:"none", background:cor || C.azul, color:"#fff", borderRadius:10, padding:"11px 16px", fontSize:13.5, fontWeight:700 }}>
+        <Presentation size={16} color="#fff" /> Abrir os slides
+      </a>
+    </div>
+  );
+}
 function parseCSV(texto) {
   const linhas = []; let campo = "", linha = [], emAspas = false;
   const s = String(texto || "");
@@ -1324,18 +1358,56 @@ function _tiposMaterial(t) {
   if (m.audioUrl) out.push({ k:"audio", ic:Headphones, rotulo:"Podcast" });
   if (Array.isArray(m.quiz) && m.quiz.length) out.push({ k:"quiz", ic:ListChecks, rotulo:"Quiz" });
   if (m.flashcardsText && String(m.flashcardsText).trim()) out.push({ k:"flashcards", ic:Layers, rotulo:"Flashcards" });
+  if (m.slidesUrl) out.push({ k:"slides", ic:Presentation, rotulo:"Slides" });
   return out;
 }
 /* Selo discreto na listagem do programa: ícones do que o trabalho oferece.
    Sem material => null (o card aparece idêntico, sem marca de “faltando”). */
 function SeloMaterial({ t }) {
   const tipos = _tiposMaterial(t);
-  if (!tipos.length) return null;
+  const temPub = !!(t && t.material && t.material.linkArtigo);
+  if (!tipos.length && !temPub) return null;
   return (
-    <span title={"Material complementar: " + tipos.map((x) => x.rotulo).join(" \u00b7 ")} aria-label={"Material complementar: " + tipos.map((x) => x.rotulo).join(", ")}
-      style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"4px 9px", borderRadius:999, background:C.cianoClaro, flexShrink:0 }}>
-      {tipos.map((x) => { const Ic = x.ic; return <Ic key={x.k} size={13} color={C.azul} />; })}
+    <span style={{ display:"inline-flex", alignItems:"center", gap:6, flexShrink:0 }}>
+      {tipos.length > 0 && (
+        <span title={"Material complementar: " + tipos.map((x) => x.rotulo).join(" \u00b7 ")} aria-label={"Material complementar: " + tipos.map((x) => x.rotulo).join(", ")}
+          style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"4px 9px", borderRadius:999, background:C.cianoClaro }}>
+          {tipos.map((x) => { const Ic = x.ic; return <Ic key={x.k} size={13} color={C.azul} />; })}
+        </span>
+      )}
+      {temPub && (
+        <span title="Trabalho com publicação revisada por pares" aria-label="Trabalho com publicação revisada por pares"
+          style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"4px 9px", borderRadius:999, background:C.azul }}>
+          <BookOpenCheck size={13} color="#fff" />
+        </span>
+      )}
     </span>
+  );
+}
+/* Publicação revisada por pares — credencial acadêmica, SEPARADA do material de
+   estudo. Botão destacado + citação visível. Só aparece se houver linkArtigo. */
+function Publicacao({ t, cor }) {
+  const m = t && t.material;
+  if (!m || !m.linkArtigo) return null;
+  return (
+    <div style={{ marginBottom:22, border:`1px solid ${C.azul}33`, borderRadius:14, overflow:"hidden", background:C.cianoClaro }}>
+      <div style={{ padding:"16px 18px", display:"flex", flexDirection:"column", gap:12 }}>
+        <div style={{ display:"flex", gap:11, alignItems:"flex-start" }}>
+          <span style={{ width:38, height:38, borderRadius:10, background:C.azul, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><BookOpenCheck size={20} color="#fff" /></span>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontSize:12, fontWeight:800, color:C.azul, textTransform:"uppercase", letterSpacing:0.6 }}>Trabalho publicado</div>
+            <div style={{ fontSize:13, color:C.cinza, marginTop:2, lineHeight:1.4 }}>Resultado revisado por pares em periódico científico.</div>
+          </div>
+        </div>
+        {m.publicacao && (
+          <div style={{ fontSize:14, lineHeight:1.55, color:C.tinta, background:"#fff", border:"1px solid #E3EAF2", borderRadius:10, padding:"12px 14px" }}>{m.publicacao}</div>
+        )}
+        <a href={m.linkArtigo} target="_blank" rel="noopener noreferrer"
+          style={{ display:"inline-flex", alignSelf:"flex-start", alignItems:"center", gap:8, textDecoration:"none", background:C.azul, color:"#fff", borderRadius:10, padding:"11px 18px", fontSize:14, fontWeight:700 }}>
+          <BookOpenCheck size={16} color="#fff" /> Ver publicação
+        </a>
+      </div>
+    </div>
   );
 }
 function MaterialSuplementar({ t }) {
@@ -1344,10 +1416,12 @@ function MaterialSuplementar({ t }) {
   const flashcards = React.useMemo(() => (m ? parseFlashcards(m.flashcardsText) : []), [m]);
   const quiz = (m && Array.isArray(m.quiz)) ? m.quiz : [];
   const temAudio = !!(m && m.audioUrl);
+  const temSlides = !!(m && m.slidesUrl);
   const abas = [];
   if (temAudio) abas.push({ k:"audio", t:"Ouvir", ic:Headphones });
   if (quiz.length) abas.push({ k:"quiz", t:"Quiz", ic:ListChecks });
   if (flashcards.length) abas.push({ k:"flashcards", t:"Flashcards", ic:Layers });
+  if (temSlides) abas.push({ k:"slides", t:"Slides", ic:Presentation });
   const [aba, setAba] = React.useState(abas.length ? abas[0].k : null);
   if (!abas.length) return null;
   const abaEff = abas.some((a) => a.k === aba) ? aba : abas[0].k;
@@ -1366,6 +1440,7 @@ function MaterialSuplementar({ t }) {
         {abaEff === "audio" && <AudioMaterial src={m.audioUrl} cor={cor} />}
         {abaEff === "quiz" && <Quiz questions={quiz} />}
         {abaEff === "flashcards" && <Flashcards cards={flashcards} />}
+        {abaEff === "slides" && <SlidesMaterial src={m.slidesUrl} cor={cor} />}
       </div>
     </div>
   );
@@ -1425,6 +1500,8 @@ function TrabalhoLeitura({ t, nav }) {
         </div>
       </div>
       <div style={{ padding:"24px 22px 8px" }}>
+        {/* Publicação revisada por pares — credencial acadêmica, no topo e separada do material */}
+        <Publicacao t={t} cor={cor} />
         {_ehResumo8(t) ? (
           /* 8ª fase: o trabalho aparece como TEXTO do resumo submetido à revista */
           <Sec titulo="Resumo" texto={t.resumo_completo} />
