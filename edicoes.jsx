@@ -199,16 +199,22 @@ function CardTrabalho({ t, ordem }) {
   const cor = corArea(t.area);
   const temVideo = !!t.videoUrl;
   const autor = _val(t.autor);
+  const resumo = _val(t.resumo);
+  const linkArtigo = _val(t.linkArtigo);
+  const publicacao = _val(t.publicacao);
+  const temPub = !!linkArtigo;
   const temPapeis = !!(_val(t.orientador) || _lista(t.coorientadores).length || _val(t.profUc) || _val(t.avaliador) || _lista(t.colaboradores).length);
+  const temExtra = temPapeis || !!resumo || temPub;
   return (
     <div style={{ background:"#fff", border:"1px solid #E3EAF2", borderLeft:`4px solid ${cor}`, borderRadius:12, overflow:"hidden" }}>
-      <button onClick={() => temPapeis && setAberto((a) => !a)} className={temPapeis ? "card-link" : ""} aria-expanded={aberto}
-        style={{ width:"100%", textAlign:"left", border:"none", background:"transparent", padding:"15px 17px", display:"flex", gap:13, cursor:temPapeis ? "pointer" : "default", fontFamily:"inherit" }}>
+      <button onClick={() => temExtra && setAberto((a) => !a)} className={temExtra ? "card-link" : ""} aria-expanded={aberto}
+        style={{ width:"100%", textAlign:"left", border:"none", background:"transparent", padding:"15px 17px", display:"flex", gap:13, cursor:temExtra ? "pointer" : "default", fontFamily:"inherit" }}>
         <div style={{ flex:1, minWidth:0 }}>
           <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8, flexWrap:"wrap" }}>
             {ordem != null && <span style={{ fontSize:11, fontWeight:800, color:C.cinza, fontVariantNumeric:"tabular-nums" }}>{String(ordem).padStart(2,"0")}</span>}
             {t.area ? <span style={{ background:cor, color:"#fff", borderRadius:999, padding:"3px 11px", fontSize:11, fontWeight:700, whiteSpace:"nowrap" }}>{t.area}</span> : null}
             {t.horario ? <span style={{ fontSize:11.5, fontWeight:700, color:C.cinza }}>{t.horario}</span> : null}
+            {temPub ? <span title="Trabalho com publicação revisada por pares" style={{ display:"inline-flex", alignItems:"center", gap:5, background:C.azul, color:"#fff", borderRadius:999, padding:"3px 10px", fontSize:11, fontWeight:700, whiteSpace:"nowrap" }}><BookOpenCheck size={12} color="#fff" /> Publicado</span> : null}
           </div>
           <div style={{ fontSize:15, fontWeight:700, color:C.tinta, lineHeight:1.32, textWrap:"pretty" }}>{t.titulo}</div>
           {autor ? (
@@ -218,12 +224,34 @@ function CardTrabalho({ t, ordem }) {
             </div>
           ) : null}
         </div>
-        {temPapeis ? (
+        {temExtra ? (
           <span style={{ flexShrink:0, color:C.cinza, transform:aberto ? "rotate(90deg)" : "none", transition:"transform .18s ease", alignSelf:"flex-start", marginTop:2 }}><ChevronRight size={18} /></span>
         ) : null}
       </button>
-      {aberto && temPapeis ? (
+      {aberto && temExtra ? (
         <div style={{ padding:"0 17px 16px" }}>
+          {resumo ? (
+            <div style={{ marginTop:4, paddingTop:14, borderTop:"1px solid #EEF2F6" }}>
+              <div style={{ fontSize:11.5, fontWeight:800, color:cor, textTransform:"uppercase", letterSpacing:0.5, marginBottom:7 }}>Resumo</div>
+              <div style={{ fontSize:13.5, lineHeight:1.6, color:C.tinta, textAlign:"justify", whiteSpace:"pre-wrap" }}>{resumo}</div>
+            </div>
+          ) : null}
+          {temPub ? (
+            <div style={{ marginTop:14, border:`1px solid ${C.azul}33`, borderRadius:12, background:C.cianoClaro, padding:"14px 15px", display:"flex", flexDirection:"column", gap:11 }}>
+              <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
+                <span style={{ width:34, height:34, borderRadius:9, background:C.azul, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><BookOpenCheck size={18} color="#fff" /></span>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:11.5, fontWeight:800, color:C.azul, textTransform:"uppercase", letterSpacing:0.5 }}>Trabalho publicado</div>
+                  <div style={{ fontSize:12.5, color:C.cinza, marginTop:2, lineHeight:1.4 }}>Resultado revisado por pares em periódico científico.</div>
+                </div>
+              </div>
+              {publicacao ? <div style={{ fontSize:13, lineHeight:1.5, color:C.tinta, background:"#fff", border:"1px solid #E3EAF2", borderRadius:9, padding:"10px 12px" }}>{publicacao}</div> : null}
+              <a href={linkArtigo} target="_blank" rel="noopener noreferrer"
+                style={{ display:"inline-flex", alignSelf:"flex-start", alignItems:"center", gap:8, textDecoration:"none", background:C.azul, color:"#fff", borderRadius:9, padding:"9px 16px", fontSize:13, fontWeight:700 }}>
+                <BookOpenCheck size={15} color="#fff" /> Ver publicação
+              </a>
+            </div>
+          ) : null}
           <RolesTrabalho t={t} />
         </div>
       ) : null}
