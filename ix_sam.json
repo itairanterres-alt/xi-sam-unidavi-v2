@@ -53,9 +53,9 @@
       ],
       "resumo": "Introdução: A depressão pós-parto (DPP) é uma condição comum, frequentemente subdiagnosticada, com impacto relevante sobre a mãe, o bebê e o vínculo entre ambos. Envolve múltiplos fatores, incluindo estigma social, falhas no rastreio e despreparo profissional, sendo o suporte médico essencial para seu reconhecimento e manejo. Metodologia: Estudo observacional, analítico e transversal, realizado com 42 médicos de diferentes especialidades no Sul do Brasil, por meio de questionário eletrônico elaborado pelos autores. O objetivo do estudo foi avaliar o perfil epidemiológico, a experiência clínica, o conhecimento, o manejo da DPP e a percepção de estigmas relacionados ao sofrimento psíquico puerperal. Resultados: Ginecologistas e Obstetras foram os que mais relataram identificação de sofrimento mental (90,0%) e segurança no manejo com fármacos na gestação e amamentação. Apenas 21,4% do total de médicos utilizavam escalas de rastreio, e 47,6% afirmaram conhecê-las. A sertralina foi considerada segura por até 100,0% dos GO e 81,0% dos demais. A formação acadêmica foi avaliada como insatisfatória por 81,0% dos médicos, especialmente fora das residências. A maioria demonstrou interesse em aprimoramento. Conclusões: O sofrimento psíquico puerperal ainda é subidentificado, e o preparo profissional é heterogêneo. A capacitação contínua e a criação de espaços acolhedores são fundamentais para ampliar o diagnóstico e a abordagem adequada da DPP.",
       "videoUrl": "https://www.youtube.com/watch?v=iqGV44zQsX8&t=794s",
-      "linkArtigo": null,
+      "linkArtigo": "https://doi.org/10.25118/2763-9037.2024.v14.1149",
       "linkPoster": null,
-      "publicacao": null,
+      "publicacao": "Barbosa TM, Albino BC, Zanon LZ, Thiesen TT. Acadêmicos de medicina e o impacto do serviço de apoio psicológico. Debates Psiquiatr. 2024;14:1-21.",
       "statusCuradoria": "pendente"
     },
     {
@@ -93,9 +93,9 @@
       ],
       "resumo": "Purpose: Corneal neurotization (CN) restores innervation to anesthetic corneas, often caused by neurotrophic keratopathy (NK), using healthy donor nerves or grafts. Despite promising outcomes, its efficacy remains unclear. We conducted a meta-analysis to assess the efficacy of CN in eyes with NK and its influence on postoperative outcomes. Methods: We systematically searched PubMed, EMBASE, and Cochrane. We calculated mean differences (MD) with 95% confidence intervals (CI) for continuous outcomes, following PRISMA guidelines. We used the R software for statistical analysis. Results: We included 17 studies (232 eyes; mean follow-up: 19.07±7.45 months). CN improved BCVA (MD: –0.44; 95% CI: –0.66 to –0.21; p<0.01; I² = 88.7%), CS (MD: 32.42 mm; 95% CI: 27.45 to 37.38; p < 0.001), CNFD (MD: 12.15 n/mm²; 95% CI: 5.09 to 19.20; p<0.001), CNBD (MD: 18.88 n/mm²; 95% CI: 8.89 to 28.87; p < 0.001), and CNFL (MD: 9.40 mm/mm²; 95% CI: 6.31 to 12.50; p<0.001) and CTBD (MD: 25.48 n/mm²; 95% CI: 14.09 to 36.87; p < 0.001).. CN also reduced Mackie scores (MD: –1.20; 95% CI: –1.42 to –0.99; p<0.001). Conclusions: CN enhances both corneal function and innervation. These findings support CN as a promising and effective approach for restoring corneal function in NK.",
       "videoUrl": "https://www.youtube.com/watch?v=iqGV44zQsX8&t=5799s",
-      "linkArtigo": null,
+      "linkArtigo": "https://doi.org/10.1097/SAP.0000000000004517",
       "linkPoster": null,
-      "publicacao": null,
+      "publicacao": "Molinari ME, Huntermann R, Chavez MP, Lopes SC, Camacho AOC. Efficacy of corneal neurotization surgery in eyes with neurotrophic keratopathy: a systematic review and meta-analysis. Ann Plast Surg. 2025;95(6):672-679.",
       "statusCuradoria": "pendente"
     },
     {
@@ -237,9 +237,9 @@
       ],
       "resumo": "Introduction: Pharmacological therapies are recommended for individuals with obesity. Semaglutide, a glucagon-like peptide-1 receptor agonist (GLP-1), and tirzepatide, a dual glucose-dependent insulinotropic polypeptide and GLP-1 receptor agonist (GIP/GLP-1), are among the leading pharmacological options for obesity treatment. This network meta-analysis (NMA) aims to evaluate the comparative efficacy of these two agents in reducing body weight and improving glycemic parameters. Methods: Pairwise comparisons within the NMA were conducted using a frequentist approach in RCTs comparing tirzepatide or semaglutide versus placebo, as well as tirzepatide versus semaglutide at their maximum dosages (15 mg and 2.4 mg, respectively). Results: A total of 28 RCTs were included, comprising 34,367 participants, 39.6% of whom were women and with a mean age of 57.8 ± 8.95 years. Tirzepatide demonstrated superiority over semaglutide in percentage weight reduction (Mean Difference [MD] 6.10%; 95% CI: 3.64, 8.57), absolute weight loss (MD 4.55 kg; 95% CI: 1.28, 7.83), BMI reduction (MD 1.71 kg/m²; 95% CI: 0.08, 3.34), and waist circumference reduction (MD 2.89 cm; 95% CI: 1.25, 4.53). Regarding glycemic parameters, tirzepatide was also more effective than semaglutide in reducing HbA1c (MD 0.33%; 95% CI: 0.20, 0.46) and fasting blood glucose (MD 10.39 mg/dL; 95% CI: 4.48, 16.29). Conclusion: In this NMA, tirzepatide appeared to be superior to semaglutide in both body weight reduction and improvement of glycemic indices",
       "videoUrl": "https://www.youtube.com/watch?v=7iDMcggIYhY&t=10208s",
-      "linkArtigo": null,
+      "linkArtigo": "https://doi.org/10.1111/1753-0407.70192",
       "linkPoster": null,
-      "publicacao": null,
+      "publicacao": "Bernardi JC, Cavalcante DVS, Huntermann R, Molinari ME, Zanon LZ, Khater J, Gomez VA, Fischer-Bacca CO. Who wins the battle against obesity? A network meta-analysis comparing tirzepatide and semaglutide. J Diabetes. 2026;18(2):e70192.",
       "statusCuradoria": "pendente"
     },
     {
@@ -315,9 +315,9 @@
       "colaboradores": [],
       "resumo": "Objetivo: O objetivo principal do presente trabalho é analisar o perfil epidemiológico dos abortos espontâneos registrados em um hospital terciário de Santa Catarina no ano de 2024. Métodos: Estudo transversal baseado na análise de prontuários eletrônicos de pacientes atendidas por aborto espontâneo no período de janeiro a dezembro de 2024. Foram coletadas variáveis como idade materna, idade gestacional, tipo de aborto, conduta médica, tempo de internação, classificação da gestação e evolução clínica. Resultados: Dos casos de abortamento espontâneo, a faixa etária mais frequente foi entre 25 a 29 anos. A média de idade gestacional no momento do aborto foi de 9,2 ± 3,4 semanas (n=109), com predominância entre a 6ª e a 10ª semanas (n=63; 56,8%). A maioria das gestações era classificada como única (n=125; 98,4%), sendo os abortos retidos (n=71; 55,9%) e completos (n=32; 25,2%) os tipos mais frequentes. A curetagem foi a conduta mais realizada (n=70; 63,6%). O tempo de internação médio foi de 0,5 ± 1,0 dias (n=127). Conclusão: Os achados reforçam a prevalência dos abortos espontâneos no primeiro trimestre, com forte associação à idade gestacional precoce. O conhecimento do perfil epidemiológico local contribui para o aprimoramento das estratégias de cuidado e acolhimento às mulheres acometidas por essa intercorrência obstétrica.",
       "videoUrl": "https://www.youtube.com/watch?v=ws1AJuuC93E&t=5997s",
-      "linkArtigo": null,
+      "linkArtigo": "https://doi.org/10.25118/2763-9037.2024.v14.1149",
       "linkPoster": null,
-      "publicacao": null,
+      "publicacao": "Barbosa TM, Albino BC, Zanon LZ, Thiesen TT. Acadêmicos de medicina e o impacto do serviço de apoio psicológico. Debates Psiquiatr. 2024;14:1-21.",
       "statusCuradoria": "pendente"
     },
     {
@@ -628,9 +628,9 @@
       ],
       "resumo": "Background: Elevated lipoprotein(a) [Lp(a)] is a genetically determined, independent risk factor for atherosclerotic cardiovascular disease (ASCVD). Small interfering RNA (siRNA) therapies target Lp(a) by silencing hepatic apolipoprotein(a) synthesis. This meta-analysis evaluates siRNA’s efficacy in reducing Lp(a) and low-density lipoprotein cholesterol (LDL-C) in randomized controlled trials (RCTs). Methods: We systematically searched PubMed, Embase, and Cochrane for RCTs investigating siRNA in adults with elevated Lp(a). Six trials (793 patients; 63.2% male, mean age 60.2 ± 11.4 years) were included. Data were analyzed using RevMan 5.1.7, with mean differences (MD) and 95% confidence intervals (CI) calculated via random-effects models. Outcomes were stratified by dose quartiles (Lepodisiran, Olpasiran, Zerlasiran, Zodasiran). Results: siRNA significantly reduced Lp(a) in a dose-dependent manner: Q1 (MD −38.7%; 95% CI −75.5 to −1.9; p = 0.04), Q2 (−68.7%; −98.7 to −38.6; p < 0.00001), Q3 (−82.5%; −95.6 to −70.1; p < 0.00001), and Q4 (−86.5%; −90.0 to −83.1; p < 0.00001). LDL-C also decreased across quartiles: Q1 (−22.7%; −41.4 to −4.1; p = 0.02), Q2 (−23.6%; −44.6 to −2.5; p = 0.03), Q3 (−25.2%; −37.6 to −12.8; p < 0.0001), and Q4 (−26.3%; −44.3 to −8.2; p = 0.03). Conclusion: siRNA therapy achieves potent, dose-dependent reductions in Lp(a), with parallel LDL-C lowering. Phase III trials are needed to validate long-term efficacy, safety, and cardiovascular outcomes.",
       "videoUrl": "https://www.youtube.com/watch?v=xVFbi2gRhE4&t=13112s",
-      "linkArtigo": null,
+      "linkArtigo": "https://doi.org/10.25118/2763-9037.2024.v14.1149",
       "linkPoster": null,
-      "publicacao": null,
+      "publicacao": "Barbosa TM, Albino BC, Zanon LZ, Thiesen TT. Acadêmicos de medicina e o impacto do serviço de apoio psicológico. Debates Psiquiatr. 2024;14:1-21.",
       "statusCuradoria": "pendente"
     },
     {
