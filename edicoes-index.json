@@ -1,6 +1,22 @@
 {
   "edicoes": [
     {
+      "id": "xi",
+      "edicaoRomano": "XI",
+      "edicaoNum": 11,
+      "datasTexto": "22 a 26 de junho de 2026",
+      "dataInicio": "2026-06-22",
+      "dataFim": "2026-06-26",
+      "status": "encerrada",
+      "cobertura": "completa",
+      "modalidade": "presencial",
+      "local": "Auditório Célio Simão Martignago",
+      "nOrais": 31,
+      "nPosteres": 33,
+      "nTrabalhos": 64,
+      "nDias": 5
+    },
+    {
       "id": "x",
       "edicaoRomano": "X",
       "edicaoNum": 10,
