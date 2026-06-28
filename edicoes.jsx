@@ -269,6 +269,7 @@ function MateriaisTrabalho({ t, cor }) {
    ============================================================ */
 function CardTrabalho({ t, ordem }) {
   const [aberto, setAberto] = useState(false);
+  const [fotoAberta, setFotoAberta] = useState(false);
   const cor = corArea(t.area);
   const temVideo = !!t.videoUrl;
   const autor = _val(t.autor);
@@ -294,7 +295,7 @@ function CardTrabalho({ t, ordem }) {
           {autor ? (
             <div style={{ display:"flex", alignItems:"center", gap:9, marginTop:11 }}>
               {_val(t.fotoAutores)
-                ? <img src={t.fotoAutores} alt={autor} referrerPolicy="no-referrer" onClick={(e) => e.stopPropagation()} style={{ width:44, height:44, borderRadius:"50%", objectFit:"cover", flexShrink:0, background:C.cinzaClaro }} />
+                ? <img src={t.fotoAutores} alt={autor} referrerPolicy="no-referrer" onClick={(e) => { e.stopPropagation(); setFotoAberta(true); }} style={{ width:44, height:44, borderRadius:"50%", objectFit:"cover", flexShrink:0, background:C.cinzaClaro, cursor:"zoom-in" }} />
                 : <span style={{ width:44, height:44, borderRadius:"50%", background:C.cinzaClaro, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><UserRound size={20} color="#B9C5D3" /></span>}
               <span style={{ fontSize:13.5, color:C.tinta, fontWeight:600 }}>{autor}</span>
             </div>
@@ -339,6 +340,11 @@ function CardTrabalho({ t, ordem }) {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z"/></svg>
             Assistir à apresentação
           </a>
+        </div>
+      ) : null}
+      {fotoAberta ? (
+        <div onClick={() => setFotoAberta(false)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.88)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", cursor:"zoom-out" }}>
+          <img src={t.fotoAutores} alt={autor} referrerPolicy="no-referrer" style={{ maxWidth:"92vw", maxHeight:"92vh", borderRadius:12, boxShadow:"0 24px 64px rgba(0,0,0,0.6)" }} />
         </div>
       ) : null}
     </div>
