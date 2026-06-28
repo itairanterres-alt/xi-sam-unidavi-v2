@@ -251,10 +251,10 @@ function MateriaisTrabalho({ t, cor }) {
           <div style={{ padding:"4px 13px 13px", fontSize:12, color:C.tinta, lineHeight:1.55, whiteSpace:"pre-wrap" }}>{refs}</div>
         </details>
       ) : null}
-      {ampliada ? (
+      {ampliada ? ReactDOM.createPortal(
         <div onClick={() => setAmpliada(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.88)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", cursor:"zoom-out" }}>
           <img src={ampliada} alt="" referrerPolicy="no-referrer" style={{ maxWidth:"92vw", maxHeight:"92vh", borderRadius:12, boxShadow:"0 24px 64px rgba(0,0,0,0.6)" }} />
-        </div>
+        </div>, document.body
       ) : null}
     </React.Fragment>
   );
@@ -342,10 +342,10 @@ function CardTrabalho({ t, ordem }) {
           </a>
         </div>
       ) : null}
-      {fotoAberta ? (
+      {fotoAberta ? ReactDOM.createPortal(
         <div onClick={() => setFotoAberta(false)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.88)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", cursor:"zoom-out" }}>
           <img src={t.fotoAutores} alt={autor} referrerPolicy="no-referrer" style={{ maxWidth:"92vw", maxHeight:"92vh", borderRadius:12, boxShadow:"0 24px 64px rgba(0,0,0,0.6)" }} />
-        </div>
+        </div>, document.body
       ) : null}
     </div>
   );
