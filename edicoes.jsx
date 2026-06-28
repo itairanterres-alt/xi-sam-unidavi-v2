@@ -288,7 +288,7 @@ function CardTrabalho({ t, ordem }) {
           {autor ? (
             <div style={{ display:"flex", alignItems:"center", gap:9, marginTop:11 }}>
               {_val(t.fotoAutores)
-                ? <img src={t.fotoAutores} alt={autor} referrerPolicy="no-referrer" style={{ width:30, height:30, borderRadius:"50%", objectFit:"cover", flexShrink:0, background:C.cinzaClaro }} />
+                ? <a href={t.fotoAutores} target="_blank" rel="noopener noreferrer" style={{ flexShrink:0 }}><img src={t.fotoAutores} alt={autor} referrerPolicy="no-referrer" style={{ width:30, height:30, borderRadius:"50%", objectFit:"cover", display:"block", background:C.cinzaClaro }} /></a>
                 : <span style={{ width:30, height:30, borderRadius:"50%", background:C.cinzaClaro, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><UserRound size={16} color="#B9C5D3" /></span>}
               <span style={{ fontSize:13.5, color:C.tinta, fontWeight:600 }}>{autor}</span>
             </div>
