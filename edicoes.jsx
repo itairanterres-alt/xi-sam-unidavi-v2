@@ -201,6 +201,7 @@ function RolesTrabalho({ t }) {
    Dirigido por campo: edições sem esses campos não renderizam nada.
    ============================================================ */
 function MateriaisTrabalho({ t, cor }) {
+  const [ampliada, setAmpliada] = useState(null);
   const figuras = Array.isArray(t.figuras) ? t.figuras.filter((f) => f && _val(f.url)) : [];
   const palavras = _lista(t.palavras);
   const refs = _val(t.referencias);
@@ -221,9 +222,9 @@ function MateriaisTrabalho({ t, cor }) {
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(220px, 1fr))", gap:14 }}>
             {figuras.map((f, i) => (
               <figure key={i} style={{ margin:0, border:"1px solid #E3EAF2", borderRadius:11, overflow:"hidden", background:"#fff" }}>
-                <a href={f.url} target="_blank" rel="noopener noreferrer" style={{ display:"block", background:C.cinzaClaro }}>
+                <div onClick={() => setAmpliada(f.url)} style={{ display:"block", background:C.cinzaClaro, cursor:"zoom-in" }}>
                   <img src={f.url} alt={f.titulo || ("Figura " + (f.ordem || i + 1))} loading="lazy" referrerPolicy="no-referrer" style={{ display:"block", width:"100%", height:160, objectFit:"cover" }} />
-                </a>
+                </div>
                 <figcaption style={{ padding:"9px 11px" }}>
                   <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4, flexWrap:"wrap" }}>
                     {f.principal ? <span style={{ fontSize:9.5, fontWeight:800, letterSpacing:0.4, textTransform:"uppercase", color:"#fff", background:cor, borderRadius:999, padding:"2px 7px" }}>Principal</span> : null}
@@ -249,6 +250,11 @@ function MateriaisTrabalho({ t, cor }) {
           <summary style={{ cursor:"pointer", padding:"10px 13px", fontSize:11.5, fontWeight:800, color:C.cinza, textTransform:"uppercase", letterSpacing:0.5, background:C.papel }}>Referências</summary>
           <div style={{ padding:"4px 13px 13px", fontSize:12, color:C.tinta, lineHeight:1.55, whiteSpace:"pre-wrap" }}>{refs}</div>
         </details>
+      ) : null}
+      {ampliada ? (
+        <div onClick={() => setAmpliada(null)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.88)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", cursor:"zoom-out" }}>
+          <img src={ampliada} alt="" referrerPolicy="no-referrer" style={{ maxWidth:"92vw", maxHeight:"92vh", borderRadius:12, boxShadow:"0 24px 64px rgba(0,0,0,0.6)" }} />
+        </div>
       ) : null}
     </React.Fragment>
   );
@@ -288,8 +294,8 @@ function CardTrabalho({ t, ordem }) {
           {autor ? (
             <div style={{ display:"flex", alignItems:"center", gap:9, marginTop:11 }}>
               {_val(t.fotoAutores)
-                ? <a href={t.fotoAutores} target="_blank" rel="noopener noreferrer" style={{ flexShrink:0 }}><img src={t.fotoAutores} alt={autor} referrerPolicy="no-referrer" style={{ width:30, height:30, borderRadius:"50%", objectFit:"cover", display:"block", background:C.cinzaClaro }} /></a>
-                : <span style={{ width:30, height:30, borderRadius:"50%", background:C.cinzaClaro, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><UserRound size={16} color="#B9C5D3" /></span>}
+                ? <img src={t.fotoAutores} alt={autor} referrerPolicy="no-referrer" style={{ width:44, height:44, borderRadius:"50%", objectFit:"cover", flexShrink:0, background:C.cinzaClaro }} />
+                : <span style={{ width:44, height:44, borderRadius:"50%", background:C.cinzaClaro, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><UserRound size={20} color="#B9C5D3" /></span>}
               <span style={{ fontSize:13.5, color:C.tinta, fontWeight:600 }}>{autor}</span>
             </div>
           ) : null}
