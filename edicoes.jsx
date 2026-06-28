@@ -169,7 +169,14 @@ function AvisoCobertura({ cobertura }) {
 function _val(x) { const s = (x == null ? "" : String(x)).trim(); return (s === "" || s === "—" || s === "-" || s === "–") ? null : s; }
 function _lista(v) { return Array.isArray(v) ? v.map(_val).filter(Boolean) : []; }
 function RolesTrabalho({ t }) {
+  /* limpa superscritos de afiliação (¹²³) e índices numéricos finais */
+  const _limparAut = (s) => String(s || "")
+    .replace(/[\u00B2\u00B3\u00B9\u2070-\u209F\u2020\u2021\u00A7\u00B6\*]/g, "")
+    .replace(/\s*\d+(?:\s*[,;]\s*\d+)*\s*$/g, "")
+    .replace(/\s{2,}/g, " ").trim();
+  const autLimpos = _lista(t.autores).map(_limparAut).filter(Boolean);
   const linhas = [];
+  if (autLimpos.length > 1) linhas.push(["Autoria", autLimpos.join(" · ")]);
   if (_val(t.orientador)) linhas.push(["Orientação", _val(t.orientador)]);
   if (_lista(t.coorientadores).length) linhas.push(["Coorientação", _lista(t.coorientadores).join(" · ")]);
   if (_val(t.profUc)) linhas.push(["Prof.ª da UC", _val(t.profUc)]);
@@ -195,11 +202,10 @@ function RolesTrabalho({ t }) {
    ============================================================ */
 function MateriaisTrabalho({ t, cor }) {
   const figuras = Array.isArray(t.figuras) ? t.figuras.filter((f) => f && _val(f.url)) : [];
-  const foto = _val(t.fotoAutores);
   const palavras = _lista(t.palavras);
   const refs = _val(t.referencias);
   const afil = _val(t.afiliacao);
-  if (!figuras.length && !foto && !palavras.length && !refs && !afil) return null;
+  if (!figuras.length && !palavras.length && !refs && !afil) return null;
   return (
     <React.Fragment>
       {palavras.length ? (
@@ -231,14 +237,7 @@ function MateriaisTrabalho({ t, cor }) {
           </div>
         </div>
       ) : null}
-      {foto ? (
-        <div style={{ marginTop:16 }}>
-          <div style={{ fontSize:11.5, fontWeight:800, color:cor, textTransform:"uppercase", letterSpacing:0.5, marginBottom:8 }}>Autores</div>
-          <a href={foto} target="_blank" rel="noopener noreferrer" style={{ display:"inline-block", border:"1px solid #E3EAF2", borderRadius:11, overflow:"hidden", maxWidth:340 }}>
-            <img src={foto} alt="Foto dos autores" loading="lazy" referrerPolicy="no-referrer" style={{ display:"block", width:"100%", height:"auto" }} />
-          </a>
-        </div>
-      ) : null}
+
       {afil ? (
         <div style={{ marginTop:14 }}>
           <div style={{ fontSize:11.5, fontWeight:800, color:C.cinza, textTransform:"uppercase", letterSpacing:0.5, marginBottom:5 }}>Afiliação</div>
@@ -272,7 +271,7 @@ function CardTrabalho({ t, ordem }) {
   const publicacao = _val(t.publicacao);
   const temPub = !!linkArtigo;
   const temPapeis = !!(_val(t.orientador) || _lista(t.coorientadores).length || _val(t.profUc) || _val(t.avaliador) || _lista(t.colaboradores).length);
-  const temMateriais = !!((Array.isArray(t.figuras) && t.figuras.length) || _val(t.fotoAutores) || _lista(t.palavras).length || _val(t.referencias) || _val(t.afiliacao));
+  const temMateriais = !!((Array.isArray(t.figuras) && t.figuras.length) || _lista(t.palavras).length || _val(t.referencias) || _val(t.afiliacao));
   const temExtra = temPapeis || !!resumo || temPub || temMateriais;
   return (
     <div style={{ background:"#fff", border:"1px solid #E3EAF2", borderLeft:`4px solid ${cor}`, borderRadius:12, overflow:"hidden" }}>
@@ -288,7 +287,9 @@ function CardTrabalho({ t, ordem }) {
           <div style={{ fontSize:15, fontWeight:700, color:C.tinta, lineHeight:1.32, textWrap:"pretty" }}>{t.titulo}</div>
           {autor ? (
             <div style={{ display:"flex", alignItems:"center", gap:9, marginTop:11 }}>
-              <span style={{ width:30, height:30, borderRadius:"50%", background:C.cinzaClaro, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><UserRound size={16} color="#B9C5D3" /></span>
+              {_val(t.fotoAutores)
+                ? <img src={t.fotoAutores} alt={autor} referrerPolicy="no-referrer" style={{ width:30, height:30, borderRadius:"50%", objectFit:"cover", flexShrink:0, background:C.cinzaClaro }} />
+                : <span style={{ width:30, height:30, borderRadius:"50%", background:C.cinzaClaro, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><UserRound size={16} color="#B9C5D3" /></span>}
               <span style={{ fontSize:13.5, color:C.tinta, fontWeight:600 }}>{autor}</span>
             </div>
           ) : null}
