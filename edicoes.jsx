@@ -7,6 +7,7 @@
 
 /* ---- registro de edições (route-ready). Navegação entre edições = commit 2 ---- */
 const EDICOES_INDEX = {
+  xi:   { file: "xi_sam.json" },
   i:    { file: "i_sam.json" },
   ii:   { file: "ii_sam.json" },
   iii:  { file: "iii_sam.json" },
@@ -188,6 +189,73 @@ function RolesTrabalho({ t }) {
 }
 
 /* ============================================================
+   MATERIAIS SUPLEMENTARES — figuras, foto dos autores, palavras-
+   chave, afiliação e referências que os alunos anexaram (XI SAM+).
+   Dirigido por campo: edições sem esses campos não renderizam nada.
+   ============================================================ */
+function MateriaisTrabalho({ t, cor }) {
+  const figuras = Array.isArray(t.figuras) ? t.figuras.filter((f) => f && _val(f.url)) : [];
+  const foto = _val(t.fotoAutores);
+  const palavras = _lista(t.palavras);
+  const refs = _val(t.referencias);
+  const afil = _val(t.afiliacao);
+  if (!figuras.length && !foto && !palavras.length && !refs && !afil) return null;
+  return (
+    <React.Fragment>
+      {palavras.length ? (
+        <div style={{ marginTop:14, display:"flex", flexWrap:"wrap", gap:7 }}>
+          {palavras.map((p, i) => (
+            <span key={i} style={{ fontSize:11.5, fontWeight:600, color:C.cinza, background:C.cinzaClaro, borderRadius:999, padding:"3px 11px" }}>{p}</span>
+          ))}
+        </div>
+      ) : null}
+      {figuras.length ? (
+        <div style={{ marginTop:16 }}>
+          <div style={{ fontSize:11.5, fontWeight:800, color:cor, textTransform:"uppercase", letterSpacing:0.5, marginBottom:10 }}>Figuras <span style={{ color:C.cinza }}>· {figuras.length}</span></div>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(220px, 1fr))", gap:14 }}>
+            {figuras.map((f, i) => (
+              <figure key={i} style={{ margin:0, border:"1px solid #E3EAF2", borderRadius:11, overflow:"hidden", background:"#fff" }}>
+                <a href={f.url} target="_blank" rel="noopener noreferrer" style={{ display:"block", background:C.cinzaClaro }}>
+                  <img src={f.url} alt={f.titulo || ("Figura " + (f.ordem || i + 1))} loading="lazy" referrerPolicy="no-referrer" style={{ display:"block", width:"100%", height:160, objectFit:"cover" }} />
+                </a>
+                <figcaption style={{ padding:"9px 11px" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4, flexWrap:"wrap" }}>
+                    {f.principal ? <span style={{ fontSize:9.5, fontWeight:800, letterSpacing:0.4, textTransform:"uppercase", color:"#fff", background:cor, borderRadius:999, padding:"2px 7px" }}>Principal</span> : null}
+                    {_val(f.secao) ? <span style={{ fontSize:10.5, fontWeight:700, color:C.cinza, textTransform:"uppercase", letterSpacing:0.3 }}>{f.secao}</span> : null}
+                  </div>
+                  {_val(f.titulo) ? <div style={{ fontSize:12.5, fontWeight:700, color:C.tinta, lineHeight:1.3 }}>{f.titulo}</div> : null}
+                  {_val(f.legenda) ? <div style={{ fontSize:11.5, color:C.cinza, lineHeight:1.4, marginTop:3 }}>{f.legenda}</div> : null}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {foto ? (
+        <div style={{ marginTop:16 }}>
+          <div style={{ fontSize:11.5, fontWeight:800, color:cor, textTransform:"uppercase", letterSpacing:0.5, marginBottom:8 }}>Autores</div>
+          <a href={foto} target="_blank" rel="noopener noreferrer" style={{ display:"inline-block", border:"1px solid #E3EAF2", borderRadius:11, overflow:"hidden", maxWidth:340 }}>
+            <img src={foto} alt="Foto dos autores" loading="lazy" referrerPolicy="no-referrer" style={{ display:"block", width:"100%", height:"auto" }} />
+          </a>
+        </div>
+      ) : null}
+      {afil ? (
+        <div style={{ marginTop:14 }}>
+          <div style={{ fontSize:11.5, fontWeight:800, color:C.cinza, textTransform:"uppercase", letterSpacing:0.5, marginBottom:5 }}>Afiliação</div>
+          <div style={{ fontSize:12, color:C.cinza, lineHeight:1.5 }}>{afil}</div>
+        </div>
+      ) : null}
+      {refs ? (
+        <details style={{ marginTop:14, border:"1px solid #EEF2F6", borderRadius:10, overflow:"hidden" }}>
+          <summary style={{ cursor:"pointer", padding:"10px 13px", fontSize:11.5, fontWeight:800, color:C.cinza, textTransform:"uppercase", letterSpacing:0.5, background:C.papel }}>Referências</summary>
+          <div style={{ padding:"4px 13px 13px", fontSize:12, color:C.tinta, lineHeight:1.55, whiteSpace:"pre-wrap" }}>{refs}</div>
+        </details>
+      ) : null}
+    </React.Fragment>
+  );
+}
+
+/* ============================================================
    CARD DE TRABALHO — abre/fecha (acordeão) para revelar papéis.
    Botão "Assistir à apresentação": aparece em todo card que tenha
    videoUrl preenchido (link do YouTube já no timestamp do trabalho);
@@ -204,7 +272,8 @@ function CardTrabalho({ t, ordem }) {
   const publicacao = _val(t.publicacao);
   const temPub = !!linkArtigo;
   const temPapeis = !!(_val(t.orientador) || _lista(t.coorientadores).length || _val(t.profUc) || _val(t.avaliador) || _lista(t.colaboradores).length);
-  const temExtra = temPapeis || !!resumo || temPub;
+  const temMateriais = !!((Array.isArray(t.figuras) && t.figuras.length) || _val(t.fotoAutores) || _lista(t.palavras).length || _val(t.referencias) || _val(t.afiliacao));
+  const temExtra = temPapeis || !!resumo || temPub || temMateriais;
   return (
     <div style={{ background:"#fff", border:"1px solid #E3EAF2", borderLeft:`4px solid ${cor}`, borderRadius:12, overflow:"hidden" }}>
       <button onClick={() => temExtra && setAberto((a) => !a)} className={temExtra ? "card-link" : ""} aria-expanded={aberto}
@@ -233,9 +302,10 @@ function CardTrabalho({ t, ordem }) {
           {resumo ? (
             <div style={{ marginTop:4, paddingTop:14, borderTop:"1px solid #EEF2F6" }}>
               <div style={{ fontSize:11.5, fontWeight:800, color:cor, textTransform:"uppercase", letterSpacing:0.5, marginBottom:7 }}>Resumo</div>
-              <div style={{ fontSize:13.5, lineHeight:1.6, color:C.tinta, textAlign:"justify", whiteSpace:"pre-wrap" }}>{resumo}</div>
+              <div className="sam-resumo-card" style={{ color:C.tinta }}>{resumo}</div>
             </div>
           ) : null}
+          <MateriaisTrabalho t={t} cor={cor} />
           {temPub ? (
             <div style={{ marginTop:14, border:`1px solid ${C.azul}33`, borderRadius:12, background:C.cianoClaro, padding:"14px 15px", display:"flex", flexDirection:"column", gap:11 }}>
               <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
@@ -279,7 +349,7 @@ function GrupoCamada({ titulo, sub, icone, trabalhos, ordemDias, contadorRef }) 
   const dias = Object.keys(porDia).sort((a, b) => (ordemDias.indexOf(a) - ordemDias.indexOf(b)));
   const temDias = dias.some((d) => d !== "—");
   return (
-    <section style={{ marginTop:40 }}>
+    <section style={{ marginTop:48 }}>
       <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:6 }}>
         <div style={{ width:42, height:42, borderRadius:11, background:`${C.ciano}1A`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}><Ic size={21} color={C.azul} /></div>
         <div style={{ flex:1, minWidth:0 }}>
@@ -291,7 +361,7 @@ function GrupoCamada({ titulo, sub, icone, trabalhos, ordemDias, contadorRef }) 
         const real = d !== "—";
         const num = ordemDias.indexOf(d) + 1;
         return (
-          <div key={d} style={{ marginTop: temDias ? 22 : 14 }}>
+          <div key={d} style={{ marginTop: temDias ? 28 : 16 }}>
             {temDias ? (
               <div style={{ display:"flex", alignItems:"center", gap:9, margin:"0 0 12px", position:"sticky", top:60, background:C.papel, padding:"8px 0", zIndex:5 }}>
                 {real
@@ -373,7 +443,7 @@ function carregarTodasEdicoes() {
     fetch(EDICOES_INDEX[id].file).then((r) => r.json())
       .then((d) => (d.trabalhos || []).map((t) => ({ ...t, _edId: d.edicao.id, _edRomano: d.edicao.edicaoRomano, _edNum: d.edicao.edicaoNum, _edDatas: d.edicao.datasTexto })))
       .catch(() => [])
-  )).then((arrs) => _xiTrabalhos().concat(arrs.flat()));
+  )).then((arrs) => arrs.flat());
   return _todasPromise;
 }
 function useTodasEdicoes(ativo) {
@@ -392,9 +462,7 @@ const CAMADA_ROTULO = { oral_tc2:"Oral", poster_tc1:"Pôster", palestra:"Palestr
 function ResultadoCruzado({ t, termo }) {
   const cor = corArea(t.area);
   const autor = _val(t.autor);
-  const href = t._edId === "xi"
-    ? `index.html?q=${encodeURIComponent(termo)}`
-    : `edicao.html#/edicao/${t._edId}?q=${encodeURIComponent(termo)}`;
+  const href = `edicao.html#/edicao/${t._edId}?q=${encodeURIComponent(termo)}`;
   return (
     <a href={href} onClick={() => window.scrollTo(0, 0)} className="card-link" style={{ width:"100%", textAlign:"left", textDecoration:"none", background:"#fff", border:"1px solid #E3EAF2", borderLeft:`4px solid ${cor}`, borderRadius:12, padding:"13px 16px", display:"flex", gap:12, alignItems:"center" }}>
       <div style={{ flex:1, minWidth:0 }}>
@@ -562,6 +630,6 @@ function PaginaEdicao({ id, initialQ }) {
 
 Object.assign(window, {
   EDICOES_INDEX, corArea, EdicaoHeader, HeroEdicao, TransmissoesEdicao,
-  AvisoCobertura, RolesTrabalho, CardTrabalho, GrupoCamada, EdicoesAnteriores,
+  AvisoCobertura, RolesTrabalho, MateriaisTrabalho, CardTrabalho, GrupoCamada, EdicoesAnteriores,
   useEdicaoData, carregarTodasEdicoes, useTodasEdicoes, ResultadoCruzado, BuscaTodas, PaginaEdicao,
 });
